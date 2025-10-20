@@ -51,8 +51,6 @@ def pearsonr_safe(x, y):
         return np.nan
     return float(np.dot(xm, ym) / denom)
 
-
-
 def select_labels_company_and_overall(label: torch.Tensor, target: str):
     """
     回傳：
@@ -80,6 +78,19 @@ def select_labels_company_and_overall(label: torch.Tensor, target: str):
     lab_company = lab.mean(dim=1, keepdim=True)  # [B,1,N,1]（沿 K）
     return lab_company
 
+def bucketize_fixed_0_100(y_2d: torch.Tensor, C: int = 5, ignore_index: int = -1) -> torch.Tensor:
+    """
+    y_2d: [B, N]，值域 0..100，允許含 NaN
+    回傳: [B, N] (long)，0..C-1；NaN→ignore_index
+    """
+    nan_mask = torch.isnan(y_2d)
+    y = torch.clamp(y_2d, 0.0, 100.0)
+    boundaries = torch.linspace(0.0, 100.0, steps=C+1, device=y.device)[1:-1]  # C-1 個內部邊界
+    # 對每一列做 bucketize
+    y_cls = torch.stack([torch.bucketize(row, boundaries, right=False) for row in y], dim=0).to(torch.long)
+    if nan_mask.any():
+        y_cls = y_cls.masked_fill(nan_mask, ignore_index)
+    return y_cls
 # -------------------------------
 # Train/Eval
 # -------------------------------
@@ -110,25 +121,25 @@ def train_one_epoch(model: nn.Module,
                     args) -> Dict[str, float]:
     model.train()
     log = {"loss_total":0.0,"mse":0.0,"ic_company":0.0,"steps":0}
+
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
         for raw in loaders_by_year[y]:
             batch = move_inputs(raw, device, args.target)
             optimizer.zero_grad(set_to_none=True)
+
             with torch.cuda.amp.autocast(enabled=args.amp):
-                out = model(batch)  # forward expects dict
+                out = model(batch)
                 losses = out.get("losses", None)
                 if losses is None:
                     raise RuntimeError("Model did not return 'losses' dict; ensure label is provided and loss enabled.")
                 loss = losses["total"]
+                    
 
-
-
-            # 反傳前檢查 loss 是否有限
+            # 反傳與更新
             if not torch.isfinite(loss):
                 print(f"[WARN] loss not finite at epoch {epoch}: {float(loss)}")
 
-            # 監看 AMP scale（出現 inf/NaN 會下降、甚至跳過 step）
             scale_before = scaler.get_scale()
             scaler.scale(loss).backward()
             if args.grad_clip is not None and args.grad_clip > 0:
@@ -140,16 +151,17 @@ def train_one_epoch(model: nn.Module,
             if scale_after < scale_before:
                 print(f"[AMP] scale decreased {scale_before} -> {scale_after} (possible inf/NaN grads)")
 
-
+            # logging
             log["loss_total"] += float(loss.detach().item())
             log["mse"]        += float(losses["mse"].detach().item())
-            log["ic_company"]         += float(losses["ic_company"].detach().item())
+            log["ic_company"] += float(losses["ic_company"].detach().item())
             log["steps"]      += 1
 
     for k in list(log.keys()):
         if k != "steps":
             log[k] = log[k] / max(1, log["steps"])
     return log
+
 
         
 @torch.no_grad()
@@ -544,6 +556,7 @@ def main():
     ap.add_argument("--root_graph", type=str, required=True)
     ap.add_argument("--root_label", type=str, required=True)
     ap.add_argument("--root_year_symbols", type=str, required=True)
+
     args = ap.parse_args()
 
     # set_seed(args.seed)
@@ -635,7 +648,6 @@ def main():
             f"(mse {tr_log['mse']:.4f}, ic_company {tr_log['ic_company']:.4f}) | "
             f"Val MSE {val_metrics['mse']:.4f} RMSE {val_metrics['rmse']:.4f} "
             f"IC_company {val_metrics.get('ic_company', float('nan')):.4f}"
-            f"SSE {val_metrics.get('sse', float('nan')):.1f} "
             f"IC_company {val_metrics.get('ic_company', float('nan')):.4f}"
         )
         

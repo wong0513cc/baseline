@@ -140,26 +140,35 @@ def _rank_transform(v: torch.Tensor, dim: int) -> torch.Tensor:
     ranks = torch.argsort(idx1, dim=-1, stable=True).float() + 1.0
     return ranks.permute(*invperm)
 
-def information_coefficient_loss(pred: torch.Tensor, target: torch.Tensor, mode: str = "pearson") -> torch.Tensor:
+def supcon_loss(z: torch.Tensor, y: torch.Tensor, tau: float = 0.1):
     """
-    Compute IC loss (want to *maximize* correlation, so loss = -IC).
-    Here we compute per batch item across time K, then average:
-      pred, target: [B, K, 1]
+    z: [B, N, D]   融合或單模態的公司嵌入（已時間池化）
+    y: [B, N]      對應的「類別」(int, 已離散化)
     """
-    assert pred.shape == target.shape
-    # reduce last dim
-    pred = pred.squeeze(-1)   # [B,K]
-    target = target.squeeze(-1)  # [B,K]
-    if mode.lower().startswith("pear"):
-        ic = _pearson_corr(pred, target, dim=1)     # [B]
-    elif mode.lower().startswith("spear"):
-        rp = _rank_transform(pred, dim=1)
-        rt = _rank_transform(target, dim=1)
-        ic = _pearson_corr(rp, rt, dim=1)           # [B]
-    else:
-        raise ValueError("ic mode must be 'pearson' or 'spearman'")
-    return -ic.mean()  # loss
-6                                                                                                                                                                                                                                                          
+    B, N, D = z.shape
+    z = torch.nn.functional.normalize(z.reshape(B*N, D), dim=-1)  # [BN, D]
+    y = y.reshape(B*N)  # [BN]
+
+    # mask: 同類別且非自身
+    mask = (y.unsqueeze(0) == y.unsqueeze(1))  # [BN, BN]
+    self_mask = torch.eye(B*N, dtype=torch.bool, device=z.device)
+    mask = mask & ~self_mask
+
+    # 相似度
+    sim = z @ z.T / tau  # [BN, BN]
+
+    # 對每一行計算 log-softmax，並只對正樣本取平均
+    sim_max = sim.max(dim=1, keepdim=True).values.detach()  # 數值穩定
+    logits = sim - sim_max
+    exp_logits = torch.exp(logits) * (~self_mask)  # 排除自己
+    log_prob = logits - torch.log(exp_logits.sum(dim=1, keepdim=True) + 1e-12)
+
+    # 正樣本平均
+    pos_log_prob = (log_prob * mask).sum(dim=1) / (mask.sum(dim=1).clamp_min(1))
+    loss = -pos_log_prob.mean()
+    return loss
+
+
 
 # --------------------------
 # Main model (no cross-attn; concat then MLP)
@@ -298,6 +307,7 @@ class ESGMultiModalModel(nn.Module):
 
             out["losses"] = {"mse": mse_company, "ic_company": ic_loss,
                              "total": mse_company }
+            
         return out
 
 
