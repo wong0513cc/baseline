@@ -9,15 +9,16 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import matplotlib.colors as mcolors            # 新增：顏色轉換 HSV→RGB
 
-from encoderSwitchAtt import ESGMultiModalModel
+from encoderClSwitchAtt import ESGMultiModalModel
 from dataset_v2 import GraphESGDataset
-from dataloader import build_loaders 
+from dataloader import build_loaders
 
 TARGET2IDX = {"env": 0, "soc": 1, "gov": 2}
 
@@ -120,7 +121,7 @@ def train_one_epoch(model: nn.Module,
                     epoch: int,
                     args) -> Dict[str, float]:
     model.train()
-    log = {"loss_total":0.0,"mse":0.0,"ic_company":0.0,"steps":0}
+    log = {"loss_total":0.0,"mse":0.0,"ic_company":0.0,"icl":0.0,"steps":0}
 
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
@@ -145,6 +146,27 @@ def train_one_epoch(model: nn.Module,
             if args.grad_clip is not None and args.grad_clip > 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
+
+            # def grad_norm(module):
+            #     s = 0.0
+            #     has = False
+            #     for p in module.parameters():
+            #         if p.grad is not None:
+            #             has = True
+            #             s += float(p.grad.norm().item())
+            #     return s, has
+
+            # if (log["steps"] % 50) == 0:  # 每 50 step 看一次
+            #     g_p, has_p = grad_norm(model.projectors['price'])
+            #     g_f, has_f = grad_norm(model.projectors['finance'])
+            #     g_n, has_n = grad_norm(model.projectors['news'])
+            #     g_e, has_e = grad_norm(model.projectors['event'])
+            #     print(f"[GRAD] proj P:{g_p:.3e} F:{g_f:.3e} N:{g_n:.3e} E:{g_e:.3e}")
+
+            #     # 若全部沒梯度，通常是沒進 optimizer 或路徑被 detach
+            #     if not (has_p or has_f or has_n or has_e):
+            #         print("[WARN] projector grads are None; check optimizer param groups & detach")
+
             scaler.step(optimizer)
             scaler.update()
             scale_after = scaler.get_scale()
@@ -155,6 +177,8 @@ def train_one_epoch(model: nn.Module,
             log["loss_total"] += float(loss.detach().item())
             log["mse"]        += float(losses["mse"].detach().item())
             log["ic_company"] += float(losses["ic_company"].detach().item())
+            # log["icl"] += float(losses.get("icl", torch.tensor(0.0)).detach().item())
+            log["icl"] += float(losses.get("icl", 0.0))
             log["steps"]      += 1
 
     for k in list(log.keys()):
@@ -178,7 +202,7 @@ def evaluate(model: nn.Module,
     per_year[y] 會存該年的「公司層級」向量（preds/labels 長度 ~ N * B）
     """
     model.eval()
-    metrics = {"mse":0.0, "mae":0.0, "rmse":0.0, "smape":0.0, "ic_company": 0.0, "count":0}
+    metrics = {"mse":0.0, "mae":0.0, "rmse":0.0, "smape":0.0, "ic_company": 0.0, "icl": 0.0, "count":0}
     per_year = {}
 
     all_preds_company, all_labels_company = [], []
@@ -291,7 +315,7 @@ def save_split_preds_labels(per_year: Dict[int, dict], out_path: str, split: str
     df.to_csv(out_path, index=False)
     return df
 
-
+# 畫Curves
 def plot_curves(history: dict, out_dir: str):
     epochs = np.arange(1, len(history.get("train", {}).get("loss_total", [])) + 1)
     if len(epochs) == 0:
@@ -337,6 +361,7 @@ def plot_curves(history: dict, out_dir: str):
     fig.savefig(out_dir, dpi=150)
     plt.close(fig)
 
+# 畫散佈圖
 def plot_scatter(pred: np.ndarray, label: np.ndarray, title: str, out_path: str):
     plt.figure()
     plt.scatter(label, pred, s=8, alpha=0.6)
@@ -409,12 +434,41 @@ def plot_modal_embeddings(model: nn.Module,
     raw = next(iter(loaders_by_year[y]))
     batch = move_inputs(raw, device, args.target)  # 轉到 [B,K,N,D] on device
 
+ # 偵測跨模態是否對齊（Hit@1），不依賴 encode_modalities
     with torch.no_grad():
-        enc = model.encode_modalities(batch, pool=pool)
-        Pp = enc["pooled"]["price"]   # [B,N,H]
-        Pf = enc["pooled"]["finance"]
-        Pn = enc["pooled"]["news"]
-        Pe = enc["pooled"]["event"]
+        model.eval()
+
+        # 取一個 batch（或用你當前的 batch 變數）
+        b = 0
+        price  = batch["price"]   # [B,K,N,Dp]
+        finance= batch["finance"]
+        news   = batch["news"]
+        event  = batch["event"]
+
+        # 只跑各自的 encoder（不需要 switch/fusion/head）
+        Hp = model.enc_price(price)    # [B,K,N,H]
+        Hn = model.enc_news(news)      # [B,K,N,H]
+        Hf = model.enc_fin(finance)
+        He = model.enc_event(event)
+        # 也可以換成其他模態配對：Hf/Hp/He
+
+        K = Hp.size(1)
+        t = torch.randint(0, K, (1,), device=Hp.device).item()   # 隨機抽一個月份索引
+
+        # 取出月 t 的公司嵌入：[N,H]，並做 L2 normalize
+        Zm = F.normalize(He[b, t], dim=-1)  # 例如 price
+        Zn = F.normalize(Hn[b, t], dim=-1)  # 例如 news
+
+        # （可選）如果你想看 projector 後的空間，打開下面兩行：
+        # Zm = F.normalize(model.projectors['price'](Hp[b, t]), dim=-1)
+        # Zn = F.normalize(model.projectors['news'] (Hn[b, t]), dim=-1)
+
+        S = Zm @ Zn.T                      # [N,N] 相似度矩陣
+        top1 = S.argmax(dim=1)             # 每家公司的最相似對象
+        N = S.size(0)
+        hit1 = (top1 == torch.arange(N, device=S.device)).float().mean().item()
+        print(f"[DEBUG] Hit@1(price->news, month {t}) = {hit1:.3f}  (random ~{1.0/N:.3f})")
+
 
         def _prep(X: torch.Tensor):
             X = X.detach().cpu().numpy()  # [B,N,H]
@@ -425,10 +479,10 @@ def plot_modal_embeddings(model: nn.Module,
                 X = X[idx]
             return X
 
-        Xp = _prep(Pp)
-        Xf = _prep(Pf)
-        Xn = _prep(Pn)
-        Xe = _prep(Pe)
+        Xp = _prep(Hp)
+        Xf = _prep(Hf)
+        Xn = _prep(Hn)
+        Xe = _prep(He)
 
         def _pca2(x):
             if x.shape[0] < 3:
@@ -613,7 +667,7 @@ def main():
     scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
 
     history = {
-        "train": {"loss_total": [], "mse": [], "ic_company": []},
+        "train": {"loss_total": [], "mse": [], "ic_company": [], "icl": [],},
         "val": {"mse": [], "mae": [], "rmse": [], "smape": [], "ic_company": []},
     }
 
@@ -625,6 +679,7 @@ def main():
         history["train"]["loss_total"].append(tr_log["loss_total"])
         history["train"]["mse"].append(tr_log["mse"])
         history["train"]["ic_company"].append(tr_log["ic_company"])
+        history["train"]["icl"].append(tr_log["icl"])
 
         # 驗證（不畫圖）
         val_metrics, val_detail = evaluate(model, val_loaders, device, args, desc="val")
@@ -645,9 +700,8 @@ def main():
         plot_curves(history, os.path.join(args.out_dir, f"curves_{args.target}.png"))
         print(
             f"Epoch {epoch:03d} | Train total {tr_log['loss_total']:.4f} "
-            f"(mse {tr_log['mse']:.4f}, ic_company {tr_log['ic_company']:.4f}) | "
+            f"(mse {tr_log['mse']:.4f}, ic_company {tr_log['ic_company']:.4f}), icl_loss {tr_log['icl']} | "
             f"Val MSE {val_metrics['mse']:.4f} RMSE {val_metrics['rmse']:.4f} "
-            f"IC_company {val_metrics.get('ic_company', float('nan')):.4f}"
             f"IC_company {val_metrics.get('ic_company', float('nan')):.4f}"
         )
         
