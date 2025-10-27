@@ -190,20 +190,19 @@ class GraphESGDataset(Dataset):
         return sample
 years = range(2015,2025)
 
-# ds = GraphESGDataset(
-#                 root_price=ROOT_PRICE,
-#                 root_finance=ROOT_FIN,
-#                 root_news=ROOT_NEWS,
-#                 root_event=ROOT_EVENT,
-#                 root_graph=ROOT_GRAPH,
-#                 root_label=ROOT_LABEL,
-#                 root_year_symbols=ROOT_SYMS,
-#                 years = range(2015,2025),
-#                 has_label=True,
-#                 strict_check=True,
-#                 fill_missing_event="zeros",
-#                 fill_missing_graph="zeros",
-#             )
-# sample = ds[1]
-# label = sample.get("label", None)
-# print(label.shape)
+ds = GraphESGDataset(
+                root_price=ROOT_PRICE,
+                root_finance=ROOT_FIN,
+                root_news=ROOT_NEWS,
+                root_event=ROOT_EVENT,
+                root_graph=ROOT_GRAPH,
+                root_label=ROOT_LABEL,
+                root_year_symbols=ROOT_SYMS,
+                years = range(2015,2025),
+                has_label=True,
+                strict_check=True,
+                fill_missing_event="zeros",
+                fill_missing_graph="zeros",
+            )
+sample = ds[1]
+label = sample.get("label", None)
