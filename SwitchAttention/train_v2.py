@@ -120,8 +120,10 @@ def train_one_epoch(model: nn.Module,
                     scaler: torch.cuda.amp.GradScaler,
                     epoch: int,
                     args) -> Dict[str, float]:
+
     model.train()
     log = {"loss_total":0.0,"mse":0.0,"ic_company":0.0,"icl":0.0,"steps":0}
+    
 
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
@@ -595,7 +597,7 @@ def main():
     ap.add_argument("--grad_clip", type=float, default=1.0)
     ap.add_argument("--amp", action="store_true", default=False)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--device", type=str, default="cuda")
+    ap.add_argument("--device", type=str, default="cuda:1")
     ap.add_argument("--logdir", type=str, default="runs")
     ap.add_argument("--out_dir", type=str, default="./outputs")
     ap.add_argument("--predict_yearly", action="store_true", default=True)
@@ -663,7 +665,22 @@ def main():
         ic_weight=0.0, ic_type="pearson"
     ).to(device)
 
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    def build_param_groups(model, lr=1e-3, wd=1e-4):
+        decay, nodecay = [], []
+        for n, p in model.named_parameters():
+            if not p.requires_grad:
+                continue
+            n_lower = n.lower()
+            if n_lower.endswith("bias") or "layernorm" in n_lower or ".ln" in n_lower:
+                nodecay.append(p)   # no weight decay
+            else:
+                decay.append(p)
+        return [
+            {"params": decay,   "weight_decay": wd,  "lr": lr},
+            {"params": nodecay, "weight_decay": 0.0, "lr": lr},
+        ]
+
+    optimizer = optim.AdamW(build_param_groups(model), lr=args.lr, weight_decay=args.weight_decay)
     scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
 
     history = {

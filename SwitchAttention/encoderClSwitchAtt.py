@@ -56,6 +56,7 @@ class BoundedHead(nn.Module):
         z = self.net(x)
         return torch.sigmoid(z) * (self.hi - self.lo) + self.lo
 
+
 # --------------------------
 # Encoders (no attention)
 # --------------------------
@@ -165,7 +166,7 @@ class ESGMultiModalModel(nn.Module):
         super().__init__()
         self.ic_weight = ic_weight
         self.ic_type = ic_type
-        self.icl_weight = icl_weight        # NEW
+        self.icl_weight =icl_weight      # NEW
         self.icl_tau = icl_tau              # NEW
 
         # encoders（略，沿用你的）
@@ -185,13 +186,12 @@ class ESGMultiModalModel(nn.Module):
         d_fused = hidden * 4
         self.company_head = BoundedHead(in_dim=d_fused, lo=0.0, hi=1.0, dropout=dropout)
 
+
         # NEW: 四個 projector（只用來算 ICL，不走預測頭）
-        self.projectors = nn.ModuleDict({
-            'price':  Projector(hidden),
-            'finance':Projector(hidden),
-            'news':   Projector(hidden),
-            'event':  Projector(hidden),
-        })
+        self.proj_price = Projector(in_dim=hidden, hid=256, out_dim=128)
+        self.proj_news  = Projector(in_dim=hidden, hid=256, out_dim=128)
+        self.proj_fin  = Projector(in_dim=hidden, hid=256, out_dim=128)
+        self.proj_event  = Projector(in_dim=hidden, hid=256, out_dim=128)
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]  # 注意你上方 concat 用的是 E,Nw 的順序；這裡保持一致
@@ -204,31 +204,109 @@ class ESGMultiModalModel(nn.Module):
         Hn = self.enc_news(news)
         He = self.enc_event(event)
 
+        # ===== Positive-only CL：12月 × 6配對，只拉近正樣本（超省記憶體） =====
+        B, K, N, H = Hp.shape
+        tau = self.icl_tau  # 不再用到，但保留參數一致性
+        loss_con_t_list = []
+
+        H_all = {'price': Hp, 'finance': Hf, 'news': Hn, 'event': He}
+        Mask_all = valid_mask_dict if valid_mask_dict is not None else {}
+        device = Hp.device
+
+        # 若某模態沒 mask，視為全 True
+        for k in H_all.keys():
+            if (k not in Mask_all) or (Mask_all[k] is None):
+                Mask_all[k] = torch.ones(B, K, N, dtype=torch.bool, device=device)
+
+        def pos_only_pair_loss(zA, zB):
+            # zA, zB: [M', d]（已對齊同一批公司的正樣本）
+            # projector 內已 L2；若想穩一點也可再算一次 cosine
+            if zA.size(0) == 0:
+                return zA.new_tensor(0.0)
+            cos = F.cosine_similarity(zA, zB, dim=-1)   # [M']
+            return (1.0 - cos).mean()                   # 拉近正樣本（無負樣本）
+
+        for t in range(K):
+            # 展平到 [M=B*N, H] 與 [M] 的 mask
+            Xp = H_all['price'][:,  t].reshape(B*N, H)
+            Xf = H_all['finance'][:,t].reshape(B*N, H)
+            Xn = H_all['news'][:,  t].reshape(B*N, H)
+            Xe = H_all['event'][:, t].reshape(B*N, H)
+
+            mp = Mask_all['price'][:,  t].reshape(B*N)  # [M] bool
+            mf = Mask_all['finance'][:,t].reshape(B*N)
+            mn = Mask_all['news'][:,  t].reshape(B*N)
+            me = Mask_all['event'][:, t].reshape(B*N)
+
+            # 六組跨模態的聯合有效遮罩
+            masks = {
+                'p_f': mp & mf,
+                'p_n': mp & mn,
+                'p_e': mp & me,
+                'f_n': mf & mn,
+                'f_e': mf & me,
+                'n_e': mn & me,
+            }
+
+            # 每組：取相同索引的公司，分別投影，再算 1-cos 平均
+            loss_t_pairs = []
+
+            idx = masks['p_f'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_price(Xp[idx])  # [M', d]
+                zb = self.proj_fin(  Xf[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            idx = masks['p_n'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_price(Xp[idx])
+                zb = self.proj_news( Xn[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            idx = masks['p_e'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_price(Xp[idx])
+                zb = self.proj_event(Xe[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            idx = masks['f_n'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_fin(  Xf[idx])
+                zb = self.proj_news( Xn[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            idx = masks['f_e'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_fin(  Xf[idx])
+                zb = self.proj_event(Xe[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            idx = masks['n_e'].nonzero(as_tuple=False).squeeze(1)
+            if idx.numel() > 0:
+                za = self.proj_news( Xn[idx])
+                zb = self.proj_event(Xe[idx])
+                loss_t_pairs.append(pos_only_pair_loss(za, zb))
+
+            if len(loss_t_pairs) > 0:
+                loss_con_t_list.append(torch.stack(loss_t_pairs).mean())
+
+        loss_con = torch.stack(loss_con_t_list).mean() if len(loss_con_t_list) > 0 else Hp.new_tensor(0.0)
+        # ===== Positive-only CL 完成 =====
+
         # 2) cross-modal（沿用你的 switch）
         updated_list, fused = self.switch([Hp, Hf, Hn, He])
 
         # 3) 時間池化 -> [B,N,H]
         P  = updated_list[0].mean(dim=1)
-        F  = updated_list[1].mean(dim=1)
+        Fin  = updated_list[1].mean(dim=1)
         Nw = updated_list[2].mean(dim=1)
         E  = updated_list[3].mean(dim=1)
 
         # 4) 融合 + 預測
-        Z = torch.cat([P, F, E, Nw], dim=-1)   # 與你上方一致：P,F,E,Nw
+        Z = torch.cat([P, Fin, E, Nw], dim=-1)   # 與你上方一致：P,F,E,Nw
         pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
 
         out = {"pred_company": pred_company}
-
-        # ====== NEW: ICL（六配對，逐月平均；公司維當 batch） ======
-        # 用「encoder 輸出」來算對比（預測路徑仍不吃 projector）
-        H_dict = {'price': Hp, 'finance': Hf, 'news': Hn, 'event': He}
-        loss_icl = multimodal_icl_monthly(
-            H_dict=H_dict,
-            projector_dict=self.projectors,
-            valid_mask_dict=valid_mask_dict,
-            tau=self.icl_tau
-        )
-        # ===========================================
 
         # 5) 監督式損失（公司層級）
         if label_company is not None:
@@ -249,13 +327,13 @@ class ESGMultiModalModel(nn.Module):
                 ic_per_b = _pearson_corr(rp, rt, dim=1)
             ic_company = ic_per_b.mean()
 
-            # NEW: 把 ICL 納入 total（IC 指標先不進 total；若想進，自己加 -self.ic_weight*ic_company）
-            total = mse_company + self.icl_weight * loss_icl
+            total = mse_company + self.icl_weight * loss_con
+            # total = mse_company
 
             out["losses"] = {
                 "mse": mse_company,
-                "ic_company": ic_company,  # 指標用；非 loss
-                "icl": loss_icl,           # NEW: 對比損失
+                "ic_company": ic_company,  
+                "icl": loss_con,          
                 "total": total
             }
 

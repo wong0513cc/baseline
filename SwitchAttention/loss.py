@@ -1,19 +1,51 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# ---- 小投影頭：每個模態接一個 2 層 MLP，再做 L2 normalize ----
-class Projector(nn.Module):
-    def __init__(self, in_dim, hid=64, out_dim=64):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, hid), nn.ReLU(inplace=True),
-            nn.Linear(hid, out_dim)
-        )
-    def forward(self, x):  # x: [..., D]
-        z = self.net(x)
-        return F.normalize(z, dim=-1)
+def l2_normalize(x, dim=-1, eps=1e-8):
+    return x / (x.norm(p=2, dim=dim, keepdim=True).clamp(min=eps))
 
+# ---- Projector：每個模態接一個 2 層 MLP，再做 L2 normalize ----
+# class Projector(nn.Module):
+#     def __init__(self, in_dim, hid=64, out_dim=64):
+#         super().__init__()
+#         self.net = nn.Sequential(
+#             nn.Linear(in_dim, hid), nn.ReLU(inplace=True),
+#             nn.Linear(hid, out_dim)
+#         )
+#     def forward(self, x):  # x: [..., D]
+#         z = self.net(x)
+#         return F.normalize(z, dim=-1)
+
+class Projector(nn.Module):
+    """
+    H -> [hid] -> ReLU -> [out] -> LayerNorm -> L2 normalize
+    - 在投影後再做 L2；不要在 encoder 輸出處就先 normalize
+    - LayerNorm 幫助穩定 logits 的尺度，讓 tau 更好調
+    """
+    def __init__(self, in_dim, hid=256, out_dim=128, p_drop=0.0):
+        super().__init__()
+        self.fc1 = nn.Linear(in_dim, hid)
+        self.act = nn.ReLU(inplace=True)  # 也可試 SiLU
+        self.drop = nn.Dropout(p_drop) if p_drop > 0 else nn.Identity()
+        self.fc2 = nn.Linear(hid, out_dim)
+        self.ln  = nn.LayerNorm(out_dim, elementwise_affine=True)
+
+        # 初始化更穩：fc2 輸出別太大
+        nn.init.kaiming_uniform_(self.fc1.weight, a=math.sqrt(5))
+        nn.init.zeros_(self.fc1.bias)
+        nn.init.xavier_uniform_(self.fc2.weight, gain=0.5)
+        nn.init.zeros_(self.fc2.bias)
+
+    def forward(self, x):  # x: [..., D]
+        z = self.fc1(x)
+        z = self.act(z)
+        z = self.drop(z)
+        z = self.fc2(z)
+        z = self.ln(z)               # 先做 LayerNorm 穩定尺度
+        z = l2_normalize(z, dim=-1)  # 再做 L2 normalize（A1 的重點）
+        return z
 
 # ---- 兩模態的雙向 InfoNCE，單月版本：把公司維 N 當 batch ----
 def info_nce_two_modal_single_month(Zm, Zn, valid_mask=None, tau=0.07):
@@ -97,14 +129,17 @@ def multimodal_icl_monthly(
                 Zn_bt = Pn(Hn_bt)  # [N, d]
 
                 # 建立此月的有效公司 mask（若有）
-                if (Mmask is not None) and (Nmask is not None):
-                    vmask_bt = (Mmask[b, t] & Nmask[b, t]).to(torch.bool)  # [N]
-                elif (Mmask is not None):
+                vmask_bt = None
+                if Mmask is not None:
                     vmask_bt = Mmask[b, t].to(torch.bool)
-                elif (Nmask is not None):
-                    vmask_bt = Nmask[b, t].to(torch.bool)
-                else:
-                    vmask_bt = None
+
+                if Nmask is not None:
+                    if vmask_bt is not None:
+                        # 如果已有 Mmask，取交集
+                        vmask_bt = vmask_bt & Nmask[b, t].to(torch.bool) 
+                    else:
+                        # 否則，直接使用 Nmask
+                        vmask_bt = Nmask[b, t].to(torch.bool)
 
                 loss_bt = info_nce_two_modal_single_month(Zm_bt, Zn_bt, vmask_bt, tau)
                 loss_months.append(loss_bt)
