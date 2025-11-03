@@ -78,118 +78,6 @@ def select_labels_company_and_overall(label: torch.Tensor, target: str):
     # 年度聚合
     lab_company = lab.mean(dim=1, keepdim=True)  # [B,1,N,1]（沿 K）
     return lab_company
-
-@torch.no_grad()
-def visualize_modal_embeddings(model, batch, save_dir, epoch, month_idx=0, max_points=2000):
-    """
-    畫兩張圖：
-      (1) Encoder 空間 H：price/finance/news/event
-      (2) Projected 空間 z（經 projector 之後）
-    只取四模態皆有效的公司；同一個月份 month_idx。
-    """
-    model.eval()
-    os.makedirs(save_dir, exist_ok=True)
-
-    # 取出四模態張量；若誤傳 3 維，補成 B=1
-    price  = batch["price"];   finance = batch["finance"]
-    news   = batch["news"];    event   = batch["event"]
-    if price.ndim   == 3: price  = price.unsqueeze(0)
-    if finance.ndim == 3: finance= finance.unsqueeze(0)
-    if news.ndim    == 3: news   = news.unsqueeze(0)
-    if event.ndim   == 3: event  = event.unsqueeze(0)
-
-    valid_mask_dict = batch.get("valid_mask_dict", None)
-
-    # Encoder 輸出（保持在 model 的 device 上）
-    Hp = model.enc_price(price)     # [B,K,N,H]
-    Hf = model.enc_fin(finance)
-    Hn = model.enc_news(news)
-    He = model.enc_event(event)
-    B, K, N, H = Hp.shape
-    t = month_idx if 0 <= month_idx < K else 0
-    device = Hp.device
-
-    # 準備四模態 mask 交集
-    def _mask(name):
-        if (valid_mask_dict is None) or (name not in valid_mask_dict) or (valid_mask_dict[name] is None):
-            return torch.ones(B, K, N, dtype=torch.bool, device=device)
-        return valid_mask_dict[name].to(device)
-
-    mp = _mask("price")[:,   t].reshape(B*N)
-    mf = _mask("finance")[:, t].reshape(B*N)
-    mn = _mask("news")[:,    t].reshape(B*N)
-    me = _mask("event")[:,   t].reshape(B*N)
-    joint = (mp & mf & mn & me)
-    idx = joint.nonzero(as_tuple=False).squeeze(1)  # [M']
-
-    if idx.numel() == 0:
-        print(f"[viz] month={t} 沒有四模態皆有效的公司，跳過可視化")
-        model.train()
-        return
-
-    # 抽樣避免太多點
-    if idx.numel() > max_points:
-        perm = torch.randperm(idx.numel(), device=idx.device)[:max_points]
-        idx = idx.index_select(0, perm)
-
-    # 當月展平到 [M, H]（仍在 GPU 上）
-    Hp_t = Hp[:, t].reshape(B*N, H).index_select(0, idx)
-    Hf_t = Hf[:, t].reshape(B*N, H).index_select(0, idx)
-    Hn_t = Hn[:, t].reshape(B*N, H).index_select(0, idx)
-    He_t = He[:, t].reshape(B*N, H).index_select(0, idx)
-
-    # === 用輸出 shape 直接推 d（不再讀 model 屬性）===
-    zp_t = model.proj_price(Hp_t)   # [M, d]
-    zf_t = model.proj_fin(  Hf_t)
-    zn_t = model.proj_news( Hn_t)
-    ze_t = model.proj_event(He_t)
-
-    # 轉到 CPU 做 PCA
-    Hp_t = Hp_t.detach().cpu(); Hf_t = Hf_t.detach().cpu()
-    Hn_t = Hn_t.detach().cpu(); He_t = He_t.detach().cpu()
-    zp_t = zp_t.detach().cpu(); zf_t = zf_t.detach().cpu()
-    zn_t = zn_t.detach().cpu(); ze_t = ze_t.detach().cpu()
-
-    # 共同 PCA（把四模態接起來做一次，再切回）
-    def pca_project_concat(tensors2d):
-        import numpy as np
-        from numpy.linalg import svd
-        mats = [x.numpy() for x in tensors2d]
-        cat = np.concatenate(mats, axis=0)   # [4M, D]
-        cat_mean = cat.mean(axis=0, keepdims=True)
-        X = cat - cat_mean
-        U, S, Vt = svd(X, full_matrices=False)
-        W = Vt[:2].T                          # [D,2]
-        Y = X @ W                              # [4M,2]
-        M = tensors2d[0].shape[0]
-        return Y[0:M], Y[M:2*M], Y[2*M:3*M], Y[3*M:4*M]
-
-    Ep2, Ef2, En2, Ee2 = pca_project_concat([Hp_t, Hf_t, Hn_t, He_t])
-    Zp2, Zf2, Zn2, Ze2 = pca_project_concat([zp_t, zf_t, zn_t, ze_t])
-
-    # 畫圖
-    def plot_four(ax, XY_list, title):
-        labels = ["price", "finance", "news", "event"]
-        markers = ['o','^','s','x']
-        for (xy, lab, mk) in zip(XY_list, labels, markers):
-            ax.scatter(xy[:,0], xy[:,1], s=6, marker=mk, alpha=0.6, label=lab)
-        ax.set_title(f"{title}  (month={t}, M={idx.numel()})")
-        ax.legend(loc='best', fontsize=9)
-        ax.grid(True, linestyle='--', linewidth=0.5)
-
-    fig1, ax1 = plt.subplots(figsize=(6,5))
-    plot_four(ax1, [Ep2, Ef2, En2, Ee2], "Encoder space (H)")
-    p1 = os.path.join(save_dir, f"emb_encoder_epoch{epoch:03d}_m{t}.png")
-    fig1.savefig(p1, dpi=160, bbox_inches="tight"); plt.close(fig1)
-
-    fig2, ax2 = plt.subplots(figsize=(6,5))
-    plot_four(ax2, [Zp2, Zf2, Zn2, Ze2], "Projected space (z)")
-    p2 = os.path.join(save_dir, f"emb_projected_epoch{epoch:03d}_m{t}.png")
-    fig2.savefig(p2, dpi=160, bbox_inches="tight"); plt.close(fig2)
-
-    print(f"[viz] saved: {p1}")
-    print(f"[viz] saved: {p2}")
-    model.train()
 # -------------------------------
 # Train/Eval
 # -------------------------------
@@ -260,19 +148,6 @@ def train_one_epoch(model: nn.Module,
             log["icl"] += float(losses.get("icl", 0.0))
             log["steps"]      += 1
 
-            viz_every = getattr(args, "viz_every", 5)   # 沒有就預設 5
-            if (epoch % viz_every == 0) and (y == years[0]) and (log["steps"] == 1):
-                # month_idx 可固定 0，或隨機挑一個：torch.randint(0, batch["price"].size(1), (1,)).item()
-                month_idx = getattr(args, "viz_month", 0)
-                visualize_modal_embeddings(
-                    model=model,
-                    batch=batch,                 # 用原始 CPU batch 也行；函式內部會 .cpu()
-                    save_dir="./_emb_viz",
-                    epoch=epoch,
-                    month_idx=month_idx,
-                    max_points=2000
-                )
-
     for k in list(log.keys()):
         if k != "steps":
             log[k] = log[k] / max(1, log["steps"])
@@ -310,7 +185,7 @@ def evaluate(model: nn.Module,
 
             # 需要公司層級標籤與輸出
             if ("label_company" not in batch) or ("pred_company" not in out):
-                continue
+                break
 
             pc = out["pred_company"].squeeze(1).squeeze(-1).detach().cpu().numpy()  # [B,N]
             lc = batch["label_company"].squeeze(1).squeeze(-1).detach().cpu().numpy()  # [B,N]

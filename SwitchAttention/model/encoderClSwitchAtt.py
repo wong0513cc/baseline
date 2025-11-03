@@ -128,20 +128,6 @@ def _pearson_corr(x: torch.Tensor, y: torch.Tensor, dim: int = -1, eps: float = 
     den = torch.sqrt((xc.pow(2).sum(dim=dim) + eps) * (yc.pow(2).sum(dim=dim) + eps))
     return num / den
 
-def _rank_transform(v: torch.Tensor, dim: int) -> torch.Tensor:
-    """
-    Approximate ranks (1..L) along `dim`. For ties we use argsort-of-argsort方式（簡化處理）。
-    """
-    # permute target dim to last for simpler handling
-    perm = list(range(v.dim()))
-    perm[dim], perm[-1] = perm[-1], perm[dim]
-    invperm = [0]*v.dim()
-    for i,p in enumerate(perm): invperm[p] = i
-    x = v.permute(*perm).contiguous()  # [..., L]
-    idx1 = torch.argsort(x, dim=-1, stable=True)
-    ranks = torch.argsort(idx1, dim=-1, stable=True).float() + 1.0
-    return ranks.permute(*invperm)
-
 # --------------------------
 # Main model (no cross-attn; concat then MLP)
 # --------------------------
@@ -158,9 +144,9 @@ class ESGMultiModalModel(nn.Module):
                  nhead_time: int = 4,
                  news_layers: int = 2, 
                  event_layers: int = 2,
-                 ic_weight: float = 0.2,    # 你原本用來記錄 IC(company) 的權重（如果要進 total）
+                 ic_weight: float = 0.1,   
                  ic_type: str = "pearson",
-                 icl_weight: float = 0.2,   # NEW: 對比損失的權重
+                 icl_weight: float = 0.3,   # NEW: 對比損失的權重
                  icl_tau: float = 0.07      # NEW: 對比損失的溫度
                  ):
         super().__init__()
@@ -169,7 +155,7 @@ class ESGMultiModalModel(nn.Module):
         self.icl_weight =icl_weight      # NEW
         self.icl_tau = icl_tau              # NEW
 
-        # encoders（略，沿用你的）
+    
         self.enc_price = LSTMTimeEncoder(d_in=d_price, hidden=hidden,
                                          num_layers=lstm_layers, bidirectional=lstm_bidirectional,
                                          dropout=dropout, use_posenc=False)
@@ -323,15 +309,10 @@ class ESGMultiModalModel(nn.Module):
 
             pN = torch.nan_to_num(p.squeeze(1).squeeze(-1), nan=0.0)  # [B,N]
             tN = torch.nan_to_num(t.squeeze(1).squeeze(-1), nan=0.0)  # [B,N]
-            if self.ic_type.lower().startswith("pear"):
-                ic_per_b = _pearson_corr(pN, tN, dim=1)               # [B]
-            else:
-                rp = _rank_transform(pN, dim=1)
-                rt = _rank_transform(tN, dim=1)
-                ic_per_b = _pearson_corr(rp, rt, dim=1)
+            ic_per_b = _pearson_corr(pN, tN, dim=1)               # [B]
             ic_company = ic_per_b.mean()
 
-            total = mse_company + self.icl_weight * loss_con
+            total = mse_company + self.icl_weight * loss_con + self.ic_weight * ((1.0 - ic_company)/2)
             # total = mse_company
 
             out["losses"] = {

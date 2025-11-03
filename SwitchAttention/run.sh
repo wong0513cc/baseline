@@ -11,7 +11,7 @@ ROOT_SYMS=/home/sally/dataset/ticker/nyse/yearly_symbol
 
 for target in env soc gov
 do
-  python train_v2.py \
+  python trainer.py \
     --target $target \
     --epochs 50 \
     --batch_size 4 \
