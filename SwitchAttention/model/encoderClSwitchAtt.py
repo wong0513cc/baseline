@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
+from model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
 from loss import Projector, multimodal_icl_monthly
 
 # --------------------------
@@ -192,7 +192,12 @@ class ESGMultiModalModel(nn.Module):
         self.gate_price = nn.Parameter(torch.tensor(0.0))
         self.gate_fin   = nn.Parameter(torch.tensor(0.0))
         self.gate_news  = nn.Parameter(torch.tensor(0.0))
-        self.gate_event = nn.Parameter(torch.tensor(0.0))
+        self.gate_event = nn.Parameter(torch.tensor(0.0))\
+        
+        self.pred_price = Projector(in_dim=128, hid=128, out_dim=128)
+        self.pred_fin   = Projector(in_dim=128, hid=128, out_dim=128)
+        self.pred_news  = Projector(in_dim=128, hid=128, out_dim=128)
+        self.pred_event = Projector(in_dim=128, hid=128, out_dim=128)
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]  # 注意你上方 concat 用的是 E,Nw 的順序；這裡保持一致
@@ -225,16 +230,42 @@ class ESGMultiModalModel(nn.Module):
             if (k not in Mask_all) or (Mask_all[k] is None):
                 Mask_all[k] = torch.ones(B, K, N, dtype=torch.bool, device=device)
 
-        def pos_only_pair_loss(zA, zB):
-            # zA,zB: [M', d]（已 L2；正樣本對齊）
-            if zA.numel() == 0 or zA.size(0) == 0:
-                return zA.new_tensor(0.0)
-            cos = F.cosine_similarity(zA, zB, dim=-1)  # [M']
-            return (1.0 - cos).mean()
+        # def pos_only_pair_loss(zA, zB):
+        #     # zA,zB: [M', d]（已 L2；正樣本對齊）
+        #     if zA.numel() == 0 or zA.size(0) == 0:
+        #         return zA.new_tensor(0.0)
+        #     cos = F.cosine_similarity(zA, zB, dim=-1)  # [M']
+        #     return (1.0 - cos).mean()
+
+        def simsiam_pair_loss(zA: torch.Tensor, zB: torch.Tensor,
+                        predA: nn.Module, predB: nn.Module) -> torch.Tensor:
+                """
+                zA, zB: [M', d]（已經用 mask 篩好）
+                predA, predB: 各自模態的 predictor
+                """
+                if zA.numel() == 0 or zB.numel() == 0:
+                    return zA.new_tensor(0.0)
+
+                # L2 normalize
+                zA = F.normalize(zA, dim=-1)
+                zB = F.normalize(zB, dim=-1)
+
+                # predictor 分支
+                pA = F.normalize(predA(zA), dim=-1)
+                pB = F.normalize(predB(zB), dim=-1)
+
+                # stop-grad 目標
+                with torch.no_grad():
+                    tA = zA.detach()
+                    tB = zB.detach()
+
+                # SimSiam 對稱 cosine 損失
+                loss_ab = 1.0 - F.cosine_similarity(pA, tB, dim=-1)
+                loss_ba = 1.0 - F.cosine_similarity(pB, tA, dim=-1)
+                return 0.5 * (loss_ab.mean() + loss_ba.mean())
 
         loss_con_t = []
         for t in range(K):
-            # 當月展平到 [M=B*N, d]
             Zp_t = zp[:, t].reshape(B*N, d)
             Zf_t = zf[:, t].reshape(B*N, d)
             Zn_t = zn[:, t].reshape(B*N, d)
@@ -246,29 +277,29 @@ class ESGMultiModalModel(nn.Module):
             me = Mask_all['event'][:, t].reshape(B*N)
 
             pairs = [
-                (Zp_t, Zf_t, mp & mf),  # p↔f
-                (Zp_t, Zn_t, mp & mn),  # p↔n
-                (Zp_t, Ze_t, mp & me),  # p↔e
-                (Zf_t, Zn_t, mf & mn),  # f↔n
-                (Zf_t, Ze_t, mf & me),  # f↔e
-                (Zn_t, Ze_t, mn & me),  # n↔e
+                # (zA_all, zB_all, mask, predA, predB)
+                (Zp_t, Zf_t, mp & mf, self.pred_price, self.pred_fin),   # p↔f
+                (Zp_t, Zn_t, mp & mn, self.pred_price, self.pred_news),  # p↔n
+                (Zp_t, Ze_t, mp & me, self.pred_price, self.pred_event), # p↔e
+                (Zf_t, Zn_t, mf & mn, self.pred_fin,   self.pred_news),  # f↔n
+                (Zf_t, Ze_t, mf & me, self.pred_fin,   self.pred_event), # f↔e
+                (Zn_t, Ze_t, mn & me, self.pred_news,  self.pred_event), # n↔e
             ]
 
             lp = []
-            for za_all, zb_all, m in pairs:
-                idx = m.nonzero(as_tuple=False).squeeze(1)  # [M']
-                if idx.numel() > 0:
-                    za = za_all.index_select(0, idx)  # [M', d]
-                    zb = zb_all.index_select(0, idx)
-                    lp.append(pos_only_pair_loss(za, zb))
+            for zA_all, zB_all, m, predA, predB in pairs:
+                idx = m.nonzero(as_tuple=False).squeeze(1)
+                if idx.numel() == 0:
+                    continue
+                zA = zA_all.index_select(0, idx)  # [M', d] 先用 mask 篩好
+                zB = zB_all.index_select(0, idx)
+                lp.append(simsiam_pair_loss(zA, zB, predA, predB))
+
             if lp:
                 loss_con_t.append(torch.stack(lp).mean())
 
-        loss_con = torch.stack(loss_con_t).mean() if loss_con_t else Hp.new_tensor(0.0)
+        loss_con = torch.stack(loss_con_t).mean() if loss_con_t else Hp.new_tensor(0.0) 
 
-        # ================================
-        # (C) 直接用 z 丟進 switch
-        # ================================
 
         # -------------------------------
         # (C) 用 z 接回去：deproj + 門控殘差 + LN → 丟進 switch

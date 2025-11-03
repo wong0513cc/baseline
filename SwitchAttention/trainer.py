@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 import matplotlib.colors as mcolors            # 新增：顏色轉換 HSV→RGB
 
-from encoderClSwitchAtt import ESGMultiModalModel
+from model.encoderClSwitchAtt import ESGMultiModalModel
 from dataset_v2 import GraphESGDataset
 from dataloader import build_loaders
 
@@ -294,8 +294,6 @@ def plot_curves(history: dict, out_dir: str):
     tr_ic    = history.get("train", {}).get("ic_company", [])
     val_ic   = history.get("val",   {}).get("ic_company", [])
 
-    
-
     fig, ax1 = plt.subplots()
 
     # 左軸：Loss / MSE
@@ -367,138 +365,127 @@ def colors_by_symbol(symbols: List[str]):
     colors = [mcolors.hsv_to_rgb((h, sat, val)) for h in hues]
     return np.array(colors)
 
-def sizes_by_rank(values: np.ndarray, base: float = 6.0, max_extra: float = 10.0):
-    """
-    可選：依連續值調整點大小，例如依市值/ESG分位。
-    values: 1D array。會做分位縮放；若不用就別呼叫。
-    """
-    if values is None or len(values) == 0:
-        return None
-    r = (values - values.min()) / (values.ptp() + 1e-8)
-    return base + max_extra * r
+# def plot_modal_embeddings(model: nn.Module,
+#                           loaders_by_year: Dict[int, DataLoader],
+#                           device: torch.device,
+#                           args,
+#                           out_path: str,
+#                           year: int = None,
+#                           pool: str = "time",
+#                           max_points: int = 5000):
+#     """
+#     從某個 validation/test 年份抓一個 batch，取四模態 encoder 後的時間池化 [B,N,H]，
+#     攤平成公司集合（B*N, H），各模態各自做 PCA 2D，畫在 2x2 子圖。
+#     """
+#     model.eval()
+#     years = sorted(list(loaders_by_year.keys()))
+#     if not years:
+#         print("[plot_modal_embeddings] no years in loader.")
+#         return
+#     y = year if (year is not None and year in years) else years[0]
+
+#     # 取一個 batch
+#     raw = next(iter(loaders_by_year[y]))
+#     batch = move_inputs(raw, device, args.target)  # 轉到 [B,K,N,D] on device
+
+#  # 偵測跨模態是否對齊（Hit@1），不依賴 encode_modalities
+#     with torch.no_grad():
+#         model.eval()
+
+#         # 取一個 batch（或用你當前的 batch 變數）
+#         b = 0
+#         price  = batch["price"]   # [B,K,N,Dp]
+#         finance= batch["finance"]
+#         news   = batch["news"]
+#         event  = batch["event"]
+
+#         # 只跑各自的 encoder（不需要 switch/fusion/head）
+#         Hp = model.enc_price(price)    # [B,K,N,H]
+#         Hn = model.enc_news(news)      # [B,K,N,H]
+#         Hf = model.enc_fin(finance)
+#         He = model.enc_event(event)
+#         # 也可以換成其他模態配對：Hf/Hp/He
+
+#         K = Hp.size(1)
+#         t = torch.randint(0, K, (1,), device=Hp.device).item()   # 隨機抽一個月份索引
+
+#         # 取出月 t 的公司嵌入：[N,H]，並做 L2 normalize
+#         Zm = F.normalize(He[b, t], dim=-1)  # 例如 price
+#         Zn = F.normalize(Hn[b, t], dim=-1)  # 例如 news
+
+#         # （可選）如果你想看 projector 後的空間，打開下面兩行：
+#         # Zm = F.normalize(model.projectors['price'](Hp[b, t]), dim=-1)
+#         # Zn = F.normalize(model.projectors['news'] (Hn[b, t]), dim=-1)
+
+#         S = Zm @ Zn.T                      # [N,N] 相似度矩陣
+#         top1 = S.argmax(dim=1)             # 每家公司的最相似對象
+#         N = S.size(0)
+#         hit1 = (top1 == torch.arange(N, device=S.device)).float().mean().item()
+#         print(f"[DEBUG] Hit@1(price->news, month {t}) = {hit1:.3f}  (random ~{1.0/N:.3f})")
 
 
-def plot_modal_embeddings(model: nn.Module,
-                          loaders_by_year: Dict[int, DataLoader],
-                          device: torch.device,
-                          args,
-                          out_path: str,
-                          year: int = None,
-                          pool: str = "time",
-                          max_points: int = 5000):
-    """
-    從某個 validation/test 年份抓一個 batch，取四模態 encoder 後的時間池化 [B,N,H]，
-    攤平成公司集合（B*N, H），各模態各自做 PCA 2D，畫在 2x2 子圖。
-    """
-    model.eval()
-    years = sorted(list(loaders_by_year.keys()))
-    if not years:
-        print("[plot_modal_embeddings] no years in loader.")
-        return
-    y = year if (year is not None and year in years) else years[0]
+#         def _prep(X: torch.Tensor):
+#             X = X.detach().cpu().numpy()  # [B,N,H]
+#             X = X.reshape(-1, X.shape[-1])  # [B*N, H]
+#             if X.shape[0] > max_points:
+#                 # 隨機下採樣避免點太多
+#                 idx = np.random.choice(X.shape[0], max_points, replace=False)
+#                 X = X[idx]
+#             return X
 
-    # 取一個 batch
-    raw = next(iter(loaders_by_year[y]))
-    batch = move_inputs(raw, device, args.target)  # 轉到 [B,K,N,D] on device
+#         Xp = _prep(Hp)
+#         Xf = _prep(Hf)
+#         Xn = _prep(Hn)
+#         Xe = _prep(He)
 
- # 偵測跨模態是否對齊（Hit@1），不依賴 encode_modalities
-    with torch.no_grad():
-        model.eval()
-
-        # 取一個 batch（或用你當前的 batch 變數）
-        b = 0
-        price  = batch["price"]   # [B,K,N,Dp]
-        finance= batch["finance"]
-        news   = batch["news"]
-        event  = batch["event"]
-
-        # 只跑各自的 encoder（不需要 switch/fusion/head）
-        Hp = model.enc_price(price)    # [B,K,N,H]
-        Hn = model.enc_news(news)      # [B,K,N,H]
-        Hf = model.enc_fin(finance)
-        He = model.enc_event(event)
-        # 也可以換成其他模態配對：Hf/Hp/He
-
-        K = Hp.size(1)
-        t = torch.randint(0, K, (1,), device=Hp.device).item()   # 隨機抽一個月份索引
-
-        # 取出月 t 的公司嵌入：[N,H]，並做 L2 normalize
-        Zm = F.normalize(He[b, t], dim=-1)  # 例如 price
-        Zn = F.normalize(Hn[b, t], dim=-1)  # 例如 news
-
-        # （可選）如果你想看 projector 後的空間，打開下面兩行：
-        # Zm = F.normalize(model.projectors['price'](Hp[b, t]), dim=-1)
-        # Zn = F.normalize(model.projectors['news'] (Hn[b, t]), dim=-1)
-
-        S = Zm @ Zn.T                      # [N,N] 相似度矩陣
-        top1 = S.argmax(dim=1)             # 每家公司的最相似對象
-        N = S.size(0)
-        hit1 = (top1 == torch.arange(N, device=S.device)).float().mean().item()
-        print(f"[DEBUG] Hit@1(price->news, month {t}) = {hit1:.3f}  (random ~{1.0/N:.3f})")
-
-
-        def _prep(X: torch.Tensor):
-            X = X.detach().cpu().numpy()  # [B,N,H]
-            X = X.reshape(-1, X.shape[-1])  # [B*N, H]
-            if X.shape[0] > max_points:
-                # 隨機下採樣避免點太多
-                idx = np.random.choice(X.shape[0], max_points, replace=False)
-                X = X[idx]
-            return X
-
-        Xp = _prep(Hp)
-        Xf = _prep(Hf)
-        Xn = _prep(Hn)
-        Xe = _prep(He)
-
-        def _pca2(x):
-            if x.shape[0] < 3:
-                # 點太少時，簡單補零
-                z = np.zeros((x.shape[0], 2), dtype=np.float32)
-            else:
-                z = PCA(n_components=2).fit_transform(x)
-            return z
+#         def _pca2(x):
+#             if x.shape[0] < 3:
+#                 # 點太少時，簡單補零
+#                 z = np.zeros((x.shape[0], 2), dtype=np.float32)
+#             else:
+#                 z = PCA(n_components=2).fit_transform(x)
+#             return z
         
-        # 取一個 batch
-        raw = next(iter(loaders_by_year[y]))
-        batch = move_inputs(raw, device, args.target)  # 轉到 [B,K,N,D]
+#         # 取一個 batch
+#         raw = next(iter(loaders_by_year[y]))
+#         batch = move_inputs(raw, device, args.target)  # 轉到 [B,K,N,D]
 
-        # 取得公司清單（對齊 N），建議在這個可視化函式呼叫前，先用 batch_size=1
-        symbols = raw.get("symbols", None)  # 你的 Dataset 若有提供，通常長度 = N；若沒有可略過上色
+#         # 取得公司清單（對齊 N），建議在這個可視化函式呼叫前，先用 batch_size=1
+#         symbols = raw.get("symbols", None)  # 你的 Dataset 若有提供，通常長度 = N；若沒有可略過上色
 
-        Zp = _pca2(Xp); Zf = _pca2(Xf); Zn = _pca2(Xn); Ze = _pca2(Xe)
+#         Zp = _pca2(Xp); Zf = _pca2(Xf); Zn = _pca2(Xn); Ze = _pca2(Xe)
 
- # 準備對齊的顏色：只取第一個 batch（建議 B=1），N 個點
-    color_map = None
-    if isinstance(symbols, list):
-        try:
-            color_map = colors_by_symbol(symbols)  # shape [N, 3]
-        except Exception:
-            color_map = None
+#  # 準備對齊的顏色：只取第一個 batch（建議 B=1），N 個點
+#     color_map = None
+#     if isinstance(symbols, list):
+#         try:
+#             color_map = colors_by_symbol(symbols)  # shape [N, 3]
+#         except Exception:
+#             color_map = None
 
-    # --- 繪圖 ---
-    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
-    axlist = [axes[0,0], axes[0,1], axes[1,0], axes[1,1]]
-    titles = ["Price (encoder)", "Finance (encoder)", "News (encoder)", "Event (encoder)"]
-    data = [Zp, Zf, Zn, Ze]
+#     # --- 繪圖 ---
+#     fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+#     axlist = [axes[0,0], axes[0,1], axes[1,0], axes[1,1]]
+#     titles = ["Price (encoder)", "Finance (encoder)", "News (encoder)", "Event (encoder)"]
+#     data = [Zp, Zf, Zn, Ze]
 
-    # 注意：這裡假設你在上面沒有對點做下採樣，且 B=1，則 Zp.shape[0] 應該 == N
-    for ax, t, z in zip(axlist, titles, data):
-        if z.shape[0] > 0:
-            if (color_map is not None) and (len(color_map) == z.shape[0]):
-                ax.scatter(z[:,0], z[:,1], s=8, c=color_map, alpha=0.9,
-                           linewidths=0.2, edgecolors="k")
-            else:
-                ax.scatter(z[:,0], z[:,1], s=8, alpha=0.9, linewidths=0.2, edgecolors="k")
-        ax.set_title(t)
-        ax.set_xticks([]); ax.set_yticks([])
-        ax.grid(True, alpha=0.15)
+#     # 注意：這裡假設你在上面沒有對點做下採樣，且 B=1，則 Zp.shape[0] 應該 == N
+#     for ax, t, z in zip(axlist, titles, data):
+#         if z.shape[0] > 0:
+#             if (color_map is not None) and (len(color_map) == z.shape[0]):
+#                 ax.scatter(z[:,0], z[:,1], s=8, c=color_map, alpha=0.9,
+#                            linewidths=0.2, edgecolors="k")
+#             else:
+#                 ax.scatter(z[:,0], z[:,1], s=8, alpha=0.9, linewidths=0.2, edgecolors="k")
+#         ax.set_title(t)
+#         ax.set_xticks([]); ax.set_yticks([])
+#         ax.grid(True, alpha=0.15)
 
-    fig.suptitle(f"Modal Encoders Embeddings (year={y}, pool={pool})")
-    fig.tight_layout(rect=[0, 0.03, 1, 0.97])
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
-    print(f"[plot_modal_embeddings] saved to {out_path}")
+#     fig.suptitle(f"Modal Encoders Embeddings (year={y}, pool={pool})")
+#     fig.tight_layout(rect=[0, 0.03, 1, 0.97])
+#     fig.savefig(out_path, dpi=150)
+#     plt.close(fig)
+#     print(f"[plot_modal_embeddings] saved to {out_path}")
 
 
 def save_test_csv(per_year: Dict[int, dict], out_path: str):
@@ -580,7 +567,7 @@ def main():
 
     args = ap.parse_args()
 
-    # set_seed(args.seed)
+    set_seed(args.seed)
     os.makedirs(args.out_dir, exist_ok=True)
 
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
@@ -695,13 +682,13 @@ def main():
         print(f"Loaded best model from epoch {ckpt['epoch']} with val_mse={ckpt['val_mse']:.6f}")
 
     # 可視化：四模態 encoder embeddings（用驗證集第一個年份的一個 batch）
-    plot_modal_embeddings(
-        model, val_loaders, device, args,
-        out_path=os.path.join(args.out_dir, f"modal_embeddings_{args.target}.png"),
-        year=None,    # or years_val[0]
-        pool="time",
-        max_points=10**9  # 保證不下採樣，顏色才能對齊 N
-    )
+    # plot_modal_embeddings(
+    #     model, val_loaders, device, args,
+    #     out_path=os.path.join(args.out_dir, f"modal_embeddings_{args.target}.png"),
+    #     year=None,    # or years_val[0]
+    #     pool="time",
+    #     max_points=10**9  # 保證不下採樣，顏色才能對齊 N
+    # )
 
     val_metrics, val_detail = evaluate(model, val_loaders, device, args, desc="val(best)")
     if len(val_detail) > 0:

@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
+from SwitchAttention.model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
 
 # --------------------------
 # Utils
