@@ -60,6 +60,42 @@ class TransformerTimeEncoder(nn.Module):
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)     # [B,K,N,H]
     
 
+class GraphMessagePassing(nn.Module):
+    """
+    x:   [B, N, D]
+    adj: [B, N, N]  (0/1 或帶權重; 只當 mask 也可)
+    """
+    def __init__(self, hidden_dim: int, dropout: float = 0.1):
+        super().__init__()
+        self.q = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.k = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.v = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.drop = nn.Dropout(dropout)
+        self.ln = nn.LayerNorm(hidden_dim)
+
+    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        B, N, D = x.shape
+
+        # 一律加 self-loop 作為 mask 的一部分
+        I = torch.eye(N, device=x.device, dtype=adj.dtype).unsqueeze(0)  # [1,N,N]
+        adj = (adj > 0) | (I > 0)   # bool mask；若 adj 有權重，這裡用 >0 取 mask
+
+        Q = self.q(x)                          # [B,N,D]
+        K = self.k(x)                          # [B,N,D]
+        V = self.v(x)                          # [B,N,D]
+
+        scores = Q @ K.transpose(-1, -2)       # [B,N,N]
+        scores = scores / math.sqrt(D)
+
+        # masked softmax
+        scores = scores.masked_fill(~adj, float('-inf'))
+        attn = torch.softmax(scores, dim=-1)   # [B,N,N]
+        attn = self.drop(attn)
+
+        out = attn @ V                         # [B,N,D]
+        out = self.ln(x + self.drop(out))      # 殘差 + LN
+        return out
+    
 
 # Main model
 class ESGMultiModalModel(nn.Module):
@@ -134,16 +170,35 @@ class ESGMultiModalModel(nn.Module):
         self.gate_fin   = nn.Parameter(torch.tensor(0.0))
         self.gate_news  = nn.Parameter(torch.tensor(0.0))
         self.gate_event = nn.Parameter(torch.tensor(0.0))
-        
-        self.pred_price = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
-        self.pred_fin   = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
-        self.pred_news  = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
-        self.pred_event = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
+
+        self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=0.1)  # 你的 attention 版或 GCN 版都行
+
+
+
+    def _encode_one_modality(self, x: torch.Tensor, adj: torch.Tensor, proj: nn.Module, norm: nn.Module) -> torch.Tensor:
+        """x: [B,K,N,Dm], adj: [B,K,N,N] -> H: [B,K,N,D] via per-step GRMP then temporal GRU."""
+        B, K, N, _ = x.shape
+        # project per step
+        X = proj(torch.clamp(norm(x), -1e3, 1e3))  # [B,K,N,D]
+        # per-timestep GRMP
+        h_steps = []
+        for k in range(K):
+            h_k = self.grmp(X[:, k], adj[:, k])  # [B,N,D]
+            h_steps.append(h_k)
+        H0 = torch.stack(h_steps, dim=1)  # [B,K,N,D]
+        # temporal GRU over K (node-wise)
+        H_in = H0.permute(0, 2, 1, 3).reshape(B * N, K, self.D)
+        H_out, _ = self.temporal_gru(H_in)
+        H = H_out.reshape(B, N, K, self.D).permute(0, 2, 1, 3)  # [B,K,N,D]
+        return H
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
+        # graph
+        adj = batch["network"]  # [B,K,N,N] bool
+    
         label_company = batch.get("label_company", None)  # [B,1,N,1]
-        valid_mask_dict = batch.get("valid_mask_dict", None)  # 可選：{'price':[B,K,N] bool, ...}
+        valid_mask_dict = batch.get("valid_mask_dict", None)  # Optional[Dict[str, torch.Tensor]]
 
         # 1) encoders -> [B,K,N,H]
         Hp = self.enc_price(price)
@@ -233,28 +288,31 @@ class ESGMultiModalModel(nn.Module):
         He_fused = self.ln_event(He +ae * ze)
         updated_list, fused = self.switch([Hp_fused, Hf_fused, Hn_fused, He_fused])  # switch 需能接受特徵維 d
 
+        def apply_gmp_seq(Hseq: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+            # Hseq: [B,K,N,H], adj: [B,K,N,N]
+            h_steps = []
+            for t in range(K):
+                h_t = self.grmp(Hseq[:, t], adj[:, t])  # [B,N,H]
+                h_steps.append(h_t)
+            return torch.stack(h_steps, dim=1)          # [B,K,N,H]
+        
+        Hp_msg = apply_gmp_seq(updated_list[0], adj)
+        Hf_msg = apply_gmp_seq(updated_list[1], adj)
+        Hn_msg = apply_gmp_seq(updated_list[2], adj)
+        He_msg = apply_gmp_seq(updated_list[3], adj)
+
+
+
         # time pooling -> [B,N,H]
-        P  = updated_list[0].mean(dim=1)
-        Fin  = updated_list[1].mean(dim=1)
-        Nw = updated_list[2].mean(dim=1)
-        E  = updated_list[3].mean(dim=1)
+        P  = Hp_msg[0].mean(dim=1)
+        Fin  = Hf_msg[1].mean(dim=1)
+        Nw = Hn_msg[2].mean(dim=1)
+        E  = He_msg[3].mean(dim=1)
 
         # fusion + predict
         Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
         pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
-
-        # # 拿最後一個timestep做預測 -> [B,N,H]
-        # P  = updated_list[0][:, -1, :, :]
-        # Fin  = updated_list[1][:, -1, :, :]
-        # Nw = updated_list[2][:, -1, :, :]
-        # E  = updated_list[3][:, -1, :, :]
-
-        # # fusion + predict
-        # Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
-        # # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
-        # pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
-
 
         out = {"pred_company": pred_company}
 
