@@ -164,45 +164,18 @@ class ESGMultiModalModel(nn.Module):
         zp, zf, zn, ze = Hp, Hf, Hn, He
         d = H
 
-        # (B) Positive-only CL（逐月×六配對；含遮罩）
+        # Positive-only CL（依照月份 六個組合）
         Mask_all = valid_mask_dict if valid_mask_dict is not None else {}
         for k in ("price","finance","news","event"):
             if (k not in Mask_all) or (Mask_all[k] is None):
                 Mask_all[k] = torch.ones(B, K, N, dtype=torch.bool, device=device)
 
-        # def pos_only_pair_loss(zA, zB):
-        #     # zA,zB: [M', d]（已 L2；正樣本對齊）
-        #     if zA.numel() == 0 or zA.size(0) == 0:
-        #         return zA.new_tensor(0.0)
-        #     cos = F.cosine_similarity(zA, zB, dim=-1)  # [M']
-        #     return (1.0 - cos).mean()
-
-        def simsiam_pair_loss(zA: torch.Tensor, zB: torch.Tensor,
-                        predA: nn.Module, predB: nn.Module) -> torch.Tensor:
-            """
-            zA, zB: [M', d]（已經用 mask 篩好）
-            predA, predB: 各自模態的 predictor
-            """
-            if zA.numel() == 0 or zB.numel() == 0:
+        def pos_only_pair_loss(zA, zB):
+            # zA,zB: [M', d]（已 L2；正樣本對齊）
+            if zA.numel() == 0 or zA.size(0) == 0:
                 return zA.new_tensor(0.0)
-
-            # L2 normalize
-            zA = F.normalize(zA, dim=-1)
-            zB = F.normalize(zB, dim=-1)
-
-            # predictor 分支
-            pA = F.normalize(predA(zA), dim=-1)
-            pB = F.normalize(predB(zB), dim=-1)
-
-            # stop-grad 目標
-            with torch.no_grad():
-                tA = zA.detach()
-                tB = zB.detach()
-
-            # SimSiam 對稱 cosine 損失
-            loss_ab = 1.0 - F.cosine_similarity(pA, tB, dim=-1)
-            loss_ba = 1.0 - F.cosine_similarity(pB, tA, dim=-1)
-            return 0.5 * (loss_ab.mean() + loss_ba.mean())
+            cos = F.cosine_similarity(zA, zB, dim=-1)  # [M']
+            return (1.0 - cos).mean()
 
         loss_con_t = []
         for t in range(K):
@@ -218,22 +191,22 @@ class ESGMultiModalModel(nn.Module):
 
             pairs = [
                 # (zA_all, zB_all, mask, predA, predB)
-                (Zp_t, Zf_t, mp & mf, self.pred_price, self.pred_fin),   # p↔f
-                (Zp_t, Zn_t, mp & mn, self.pred_price, self.pred_news),  # p↔n
-                (Zp_t, Ze_t, mp & me, self.pred_price, self.pred_event), # p↔e
-                (Zf_t, Zn_t, mf & mn, self.pred_fin,   self.pred_news),  # f↔n
-                (Zf_t, Ze_t, mf & me, self.pred_fin,   self.pred_event), # f↔e
-                (Zn_t, Ze_t, mn & me, self.pred_news,  self.pred_event), # n↔e
+                (Zp_t, Zf_t, mp & mf),   # p↔f
+                (Zp_t, Zn_t, mp & mn),  # p↔n
+                (Zp_t, Ze_t, mp & me), # p↔e
+                (Zf_t, Zn_t, mf & mn),  # f↔n
+                (Zf_t, Ze_t, mf & me), # f↔e
+                (Zn_t, Ze_t, mn & me), # n↔e
             ]
 
             lp = []
-            for zA_all, zB_all, m, predA, predB in pairs:
+            for zA_all, zB_all, m in pairs:
                 idx = m.nonzero(as_tuple=False).squeeze(1)
                 if idx.numel() == 0:
                     continue
                 zA = zA_all.index_select(0, idx)  # [M', d] 先用 mask 篩好
                 zB = zB_all.index_select(0, idx)
-                lp.append(simsiam_pair_loss(zA, zB, predA, predB))
+                lp.append(pos_only_pair_loss(zA, zB))
 
             if lp:
                 loss_con_t.append(torch.stack(lp).mean())
@@ -260,26 +233,27 @@ class ESGMultiModalModel(nn.Module):
         He_fused = self.ln_event(He +ae * ze)
         updated_list, fused = self.switch([Hp_fused, Hf_fused, Hn_fused, He_fused])  # switch 需能接受特徵維 d
 
-        # # time pooling -> [B,N,H]
-        # P  = updated_list[0].mean(dim=1)
-        # Fin  = updated_list[1].mean(dim=1)
-        # Nw = updated_list[2].mean(dim=1)
-        # E  = updated_list[3].mean(dim=1)
-
-        # # fusion + predict
-        # Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
-        # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
-
-        # 拿最後一個timestep做預測 -> [B,N,H]
-        P  = updated_list[0][:, -1, :, :]
-        Fin  = updated_list[1][:, -1, :, :]
-        Nw = updated_list[2][:, -1, :, :]
-        E  = updated_list[3][:, -1, :, :]
+        # time pooling -> [B,N,H]
+        P  = updated_list[0].mean(dim=1)
+        Fin  = updated_list[1].mean(dim=1)
+        Nw = updated_list[2].mean(dim=1)
+        E  = updated_list[3].mean(dim=1)
 
         # fusion + predict
         Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
-        # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
+        pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
+
+        # # 拿最後一個timestep做預測 -> [B,N,H]
+        # P  = updated_list[0][:, -1, :, :]
+        # Fin  = updated_list[1][:, -1, :, :]
+        # Nw = updated_list[2][:, -1, :, :]
+        # E  = updated_list[3][:, -1, :, :]
+
+        # # fusion + predict
+        # Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
+        # # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
+        # pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
 
         out = {"pred_company": pred_company}
