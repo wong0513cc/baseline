@@ -4,62 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
-from loss import Projector, multimodal_icl_monthly
-
-# --------------------------
-# Utils
-# --------------------------
-class SafeLayerNorm(nn.LayerNorm):
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = torch.nan_to_num(x, nan=0.0, posinf=1e5, neginf=-1e5)
-        return super().forward(x)
-
-class SinusoidalPositionalEncoding(nn.Module):
-    def __init__(self, d_model: int, max_len: int = 512):
-        super().__init__()
-        pe = torch.zeros(max_len, d_model)
-        pos = torch.arange(0, max_len).unsqueeze(1).float()
-        div = torch.exp(torch.arange(0, d_model, 2).float() * (-(math.log(10000.0) / d_model)))
-        pe[:, 0::2] = torch.sin(pos * div)
-        pe[:, 1::2] = torch.cos(pos * div)
-        self.register_buffer("pe", pe)  # [max_len, d_model]
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        支援：
-          - 3D: [B, K, D]（例如 B*N, K, H）
-          - 4D: [B, K, N, D]
-        """
-        K = x.size(1)
-        if x.dim() == 3:
-            # x: [B, K, D]
-            return x + self.pe[:K].to(x.device).unsqueeze(0)       # -> [1, K, D]
-        elif x.dim() == 4:
-            # x: [B, K, N, D]
-            return x + self.pe[:K].to(x.device).unsqueeze(0).unsqueeze(2)  # -> [1, K, 1, D]
-        else:
-            raise ValueError(f"SinusoidalPositionalEncoding expects 3D or 4D, got {x.dim()}D")
-        
-class BoundedHead(nn.Module):
-    def __init__(self, in_dim: int, lo: float = 0.0, hi: float = 1.0, dropout: float = 0.1):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(in_dim, in_dim),
-            nn.ReLU(),
-            SafeLayerNorm(in_dim),
-            nn.Dropout(dropout),
-            nn.Linear(in_dim, 1)
-        )
-        self.register_buffer("lo", torch.tensor(float(lo)))
-        self.register_buffer("hi", torch.tensor(float(hi)))
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        z = self.net(x)
-        return torch.sigmoid(z) * (self.hi - self.lo) + self.lo
+from loss import Projector, multimodal_icl_monthly, _pearson_corr
+from utils import SafeLayerNorm, SinusoidalPositionalEncoding, BoundedHead
 
 
-# --------------------------
-# Encoders (no attention)
-# --------------------------
+
+# Encoders
 class LSTMTimeEncoder(nn.Module):
     def __init__(self, d_in: int, hidden: int, num_layers: int = 1, bidirectional: bool = False, dropout: float = 0.1, use_posenc: bool = False):
         super().__init__()
@@ -110,27 +60,8 @@ class TransformerTimeEncoder(nn.Module):
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)     # [B,K,N,H]
     
 
-# --------------------------
-# Information Coefficient (IC) loss
-# --------------------------
-def _pearson_corr(x: torch.Tensor, y: torch.Tensor, dim: int = -1, eps: float = 1e-8) -> torch.Tensor:
-    """
-    Pearson correlation along `dim`.
-    x,y: same shape; returns correlation with that dim reduced.
-    """
-    x = torch.nan_to_num(x, nan=0.0)
-    y = torch.nan_to_num(y, nan=0.0)
-    x_mean = x.mean(dim=dim, keepdim=True)
-    y_mean = y.mean(dim=dim, keepdim=True)
-    xc = x - x_mean
-    yc = y - y_mean
-    num = (xc * yc).sum(dim=dim)
-    den = torch.sqrt((xc.pow(2).sum(dim=dim) + eps) * (yc.pow(2).sum(dim=dim) + eps))
-    return num / den
 
-# --------------------------
-# Main model (no cross-attn; concat then MLP)
-# --------------------------
+# Main model
 class ESGMultiModalModel(nn.Module):
     def __init__(self,
                  d_price: int, 
@@ -146,14 +77,14 @@ class ESGMultiModalModel(nn.Module):
                  event_layers: int = 2,
                  ic_weight: float = 0.1,   
                  ic_type: str = "pearson",
-                 icl_weight: float = 0.3,   # NEW: 對比損失的權重
-                 icl_tau: float = 0.07      # NEW: 對比損失的溫度
+                 icl_weight: float = 0.05,  
+                 icl_tau: float = 0.07     
                  ):
         super().__init__()
         self.ic_weight = ic_weight
         self.ic_type = ic_type
-        self.icl_weight =icl_weight      # NEW
-        self.icl_tau = icl_tau              # NEW
+        self.icl_weight =icl_weight     
+        self.icl_tau = icl_tau           
 
     
         self.enc_price = LSTMTimeEncoder(d_in=d_price, hidden=hidden,
@@ -171,36 +102,46 @@ class ESGMultiModalModel(nn.Module):
 
         d_fused = hidden * 4
         self.company_head = BoundedHead(in_dim=d_fused, lo=0.0, hi=1.0, dropout=dropout)
+        self.predictor = nn.Linear(d_fused, 1)
 
-        self.proj_price = Projector(in_dim=hidden, hid=128, out_dim=128)
-        self.proj_news  = Projector(in_dim=hidden, hid=128, out_dim=128)
-        self.proj_fin  = Projector(in_dim=hidden, hid=128, out_dim=128)
-        self.proj_event  = Projector(in_dim=hidden, hid=128, out_dim=128)
+        # self.proj_price = Projector(in_dim=hidden, hid=128, out_dim=128)
+        # self.proj_news  = Projector(in_dim=hidden, hid=128, out_dim=128)
+        # self.proj_fin  = Projector(in_dim=hidden, hid=128, out_dim=128)
+        # self.proj_event  = Projector(in_dim=hidden, hid=128, out_dim=128)
 
-        self.deproj_price = nn.Linear(128, hidden)
-        self.deproj_news  = nn.Linear(128, hidden)
-        self.deproj_fin  = nn.Linear(128, hidden)
-        self.deproj_event  = nn.Linear(128, hidden)
+        # self.deproj_price = nn.Linear(128, hidden)
+        # self.deproj_news  = nn.Linear(128, hidden)
+        # self.deproj_fin  = nn.Linear(128, hidden)
+        # self.deproj_event  = nn.Linear(128, hidden)
 
-        # 每個模態一個 LayerNorm（穩定融合）
+        self.proj_price = nn.Identity()
+        self.proj_fin   = nn.Identity()
+        self.proj_news  = nn.Identity()
+        self.proj_event = nn.Identity()
+
+        self.deproj_price = nn.Identity()
+        self.deproj_fin   = nn.Identity()
+        self.deproj_news  = nn.Identity()
+        self.deproj_event = nn.Identity()
+
+        # 每個模態一個 LayerNorm
         self.ln_price = nn.LayerNorm(hidden)
         self.ln_fin   = nn.LayerNorm(hidden)
         self.ln_news  = nn.LayerNorm(hidden)
         self.ln_event = nn.LayerNorm(hidden)
 
-        # 可學的融合門控（初值 0 → 一開始幾乎用原 H，漸進引入 z）
         self.gate_price = nn.Parameter(torch.tensor(0.0))
         self.gate_fin   = nn.Parameter(torch.tensor(0.0))
         self.gate_news  = nn.Parameter(torch.tensor(0.0))
-        self.gate_event = nn.Parameter(torch.tensor(0.0))\
+        self.gate_event = nn.Parameter(torch.tensor(0.0))
         
-        self.pred_price = Projector(in_dim=128, hid=128, out_dim=128)
-        self.pred_fin   = Projector(in_dim=128, hid=128, out_dim=128)
-        self.pred_news  = Projector(in_dim=128, hid=128, out_dim=128)
-        self.pred_event = Projector(in_dim=128, hid=128, out_dim=128)
+        self.pred_price = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
+        self.pred_fin   = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
+        self.pred_news  = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
+        self.pred_event = Projector(in_dim=hidden, hid=hidden, out_dim=hidden)
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]  # 注意你上方 concat 用的是 E,Nw 的順序；這裡保持一致
+        price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
         label_company = batch.get("label_company", None)  # [B,1,N,1]
         valid_mask_dict = batch.get("valid_mask_dict", None)  # 可選：{'price':[B,K,N] bool, ...}
 
@@ -213,18 +154,17 @@ class ESGMultiModalModel(nn.Module):
         B, K, N, H = Hp.shape
         device = Hp.device
 
-        # ================================
-        # (A) 整批投影：H → z（只用 z）
-        # ================================
-        zp = self.proj_price(Hp.reshape(-1, H)).reshape(B, K, N, -1)   # [B,K,N,d]
-        zf = self.proj_fin(  Hf.reshape(-1, H)).reshape(B, K, N, -1)
-        zn = self.proj_news( Hn.reshape(-1, H)).reshape(B, K, N, -1)
-        ze = self.proj_event(He.reshape(-1, H)).reshape(B, K, N, -1)
-        d  = zp.size(-1)
+        # # 整批投影：H → z
+        # zp = self.proj_price(Hp.reshape(-1, H)).reshape(B, K, N, -1)   # [B,K,N,d]
+        # zf = self.proj_fin(  Hf.reshape(-1, H)).reshape(B, K, N, -1)
+        # zn = self.proj_news( Hn.reshape(-1, H)).reshape(B, K, N, -1)
+        # ze = self.proj_event(He.reshape(-1, H)).reshape(B, K, N, -1)
+        # d  = zp.size(-1)
 
-        # ================================
+        zp, zf, zn, ze = Hp, Hf, Hn, He
+        d = H
+
         # (B) Positive-only CL（逐月×六配對；含遮罩）
-        # ================================
         Mask_all = valid_mask_dict if valid_mask_dict is not None else {}
         for k in ("price","finance","news","event"):
             if (k not in Mask_all) or (Mask_all[k] is None):
@@ -239,30 +179,30 @@ class ESGMultiModalModel(nn.Module):
 
         def simsiam_pair_loss(zA: torch.Tensor, zB: torch.Tensor,
                         predA: nn.Module, predB: nn.Module) -> torch.Tensor:
-                """
-                zA, zB: [M', d]（已經用 mask 篩好）
-                predA, predB: 各自模態的 predictor
-                """
-                if zA.numel() == 0 or zB.numel() == 0:
-                    return zA.new_tensor(0.0)
+            """
+            zA, zB: [M', d]（已經用 mask 篩好）
+            predA, predB: 各自模態的 predictor
+            """
+            if zA.numel() == 0 or zB.numel() == 0:
+                return zA.new_tensor(0.0)
 
-                # L2 normalize
-                zA = F.normalize(zA, dim=-1)
-                zB = F.normalize(zB, dim=-1)
+            # L2 normalize
+            zA = F.normalize(zA, dim=-1)
+            zB = F.normalize(zB, dim=-1)
 
-                # predictor 分支
-                pA = F.normalize(predA(zA), dim=-1)
-                pB = F.normalize(predB(zB), dim=-1)
+            # predictor 分支
+            pA = F.normalize(predA(zA), dim=-1)
+            pB = F.normalize(predB(zB), dim=-1)
 
-                # stop-grad 目標
-                with torch.no_grad():
-                    tA = zA.detach()
-                    tB = zB.detach()
+            # stop-grad 目標
+            with torch.no_grad():
+                tA = zA.detach()
+                tB = zB.detach()
 
-                # SimSiam 對稱 cosine 損失
-                loss_ab = 1.0 - F.cosine_similarity(pA, tB, dim=-1)
-                loss_ba = 1.0 - F.cosine_similarity(pB, tA, dim=-1)
-                return 0.5 * (loss_ab.mean() + loss_ba.mean())
+            # SimSiam 對稱 cosine 損失
+            loss_ab = 1.0 - F.cosine_similarity(pA, tB, dim=-1)
+            loss_ba = 1.0 - F.cosine_similarity(pB, tA, dim=-1)
+            return 0.5 * (loss_ab.mean() + loss_ba.mean())
 
         loss_con_t = []
         for t in range(K):
@@ -301,35 +241,49 @@ class ESGMultiModalModel(nn.Module):
         loss_con = torch.stack(loss_con_t).mean() if loss_con_t else Hp.new_tensor(0.0) 
 
 
-        # -------------------------------
-        # (C) 用 z 接回去：deproj + 門控殘差 + LN → 丟進 switch
-        # -------------------------------
+
+        # 用 z 接回去：deproj + 門控殘差 + LN → 丟進 switch
         ap = torch.sigmoid(self.gate_price)
         af = torch.sigmoid(self.gate_fin)
         an = torch.sigmoid(self.gate_news)
         ae = torch.sigmoid(self.gate_event)
 
-        # deproj 接收 [..., d]，所以先展平再 reshape 回來
-        Hp_fused = self.ln_price(Hp + ap * self.deproj_price(zp.reshape(-1, d)).reshape(B, K, N, H))
-        Hf_fused = self.ln_fin(  Hf + af * self.deproj_fin(  zf.reshape(-1, d)).reshape(B, K, N, H))
-        Hn_fused = self.ln_news(Hn + an * self.deproj_news( zn.reshape(-1, d)).reshape(B, K, N, H))
-        He_fused = self.ln_event(He + ae * self.deproj_event(ze.reshape(-1, d)).reshape(B, K, N, H))
+        # # deproj 接收 [..., d]，所以先展平再 reshape 回來
+        # Hp_fused = self.ln_price(Hp + ap * self.deproj_price(zp.reshape(-1, d)).reshape(B, K, N, H))
+        # Hf_fused = self.ln_fin(  Hf + af * self.deproj_fin(  zf.reshape(-1, d)).reshape(B, K, N, H))
+        # Hn_fused = self.ln_news(Hn + an * self.deproj_news( zn.reshape(-1, d)).reshape(B, K, N, H))
+        # He_fused = self.ln_event(He + ae * self.deproj_event(ze.reshape(-1, d)).reshape(B, K, N, H))
 
+        Hp_fused = self.ln_price(Hp +ap * zp)
+        Hf_fused = self.ln_fin(  Hf +af * zf)
+        Hn_fused = self.ln_news(Hn +an * zn)
+        He_fused = self.ln_event(He +ae * ze)
         updated_list, fused = self.switch([Hp_fused, Hf_fused, Hn_fused, He_fused])  # switch 需能接受特徵維 d
 
-        # 3) 時間池化 -> [B,N,H]
-        P  = updated_list[0].mean(dim=1)
-        Fin  = updated_list[1].mean(dim=1)
-        Nw = updated_list[2].mean(dim=1)
-        E  = updated_list[3].mean(dim=1)
+        # # time pooling -> [B,N,H]
+        # P  = updated_list[0].mean(dim=1)
+        # Fin  = updated_list[1].mean(dim=1)
+        # Nw = updated_list[2].mean(dim=1)
+        # E  = updated_list[3].mean(dim=1)
 
-        # 4) 融合 + 預測
-        Z = torch.cat([P, Fin, Nw, E], dim=-1)   # 與你上方一致：P,F,E,Nw
-        pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
+        # # fusion + predict
+        # Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
+        # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
+
+        # 拿最後一個timestep做預測 -> [B,N,H]
+        P  = updated_list[0][:, -1, :, :]
+        Fin  = updated_list[1][:, -1, :, :]
+        Nw = updated_list[2][:, -1, :, :]
+        E  = updated_list[3][:, -1, :, :]
+
+        # fusion + predict
+        Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
+        # pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
+        pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
+
 
         out = {"pred_company": pred_company}
 
-        # 5) 監督式損失（公司層級）
         if label_company is not None:
             p = pred_company                  # [B,1,N,1]
             t = label_company                 # [B,1,N,1]

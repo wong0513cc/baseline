@@ -3,6 +3,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# IC loss
+def _pearson_corr(x: torch.Tensor, y: torch.Tensor, dim: int = -1, eps: float = 1e-8) -> torch.Tensor:
+    """
+    Pearson correlation along `dim`.
+    x,y: same shape; returns correlation with that dim reduced.
+    """
+    x = torch.nan_to_num(x, nan=0.0)
+    y = torch.nan_to_num(y, nan=0.0)
+    x_mean = x.mean(dim=dim, keepdim=True)
+    y_mean = y.mean(dim=dim, keepdim=True)
+    xc = x - x_mean
+    yc = y - y_mean
+    num = (xc * yc).sum(dim=dim)
+    den = torch.sqrt((xc.pow(2).sum(dim=dim) + eps) * (yc.pow(2).sum(dim=dim) + eps))
+    return num / den
+
 def l2_normalize(x, dim=-1, eps=1e-8):
     return x / (x.norm(p=2, dim=dim, keepdim=True).clamp(min=eps))
 
@@ -17,6 +33,7 @@ def l2_normalize(x, dim=-1, eps=1e-8):
 #     def forward(self, x):  # x: [..., D]
 #         z = self.net(x)
 #         return F.normalize(z, dim=-1)
+
 
 class Projector(nn.Module):
     """
