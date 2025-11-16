@@ -3,10 +3,13 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import List, Dict, Optional, Tuple
 from model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
 from loss import Projector, multimodal_icl_monthly, _pearson_corr
-from utils import SafeLayerNorm, SinusoidalPositionalEncoding, BoundedHead
+from utils import SafeLayerNorm, PositionalEncoding, head
 
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Encoders
@@ -22,7 +25,7 @@ class LSTMTimeEncoder(nn.Module):
         )
         out_dim = h * (2 if bidirectional else 1)
         self.proj_out = nn.Linear(out_dim, hidden) if out_dim != hidden else nn.Identity()
-        self.posenc = SinusoidalPositionalEncoding(hidden) if use_posenc else nn.Identity()
+        self.posenc = PositionalEncoding(d_in) if use_posenc else nn.Identity()
         self.norm = SafeLayerNorm(hidden)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -47,7 +50,7 @@ class TransformerTimeEncoder(nn.Module):
             batch_first=True, norm_first=True
         )
         self.encoder = nn.TransformerEncoder(enc_layer, num_layers=num_layers)
-        self.posenc = SinusoidalPositionalEncoding(d_model) if use_posenc else nn.Identity()
+        self.posenc = PositionalEncoding(d_model) if use_posenc else nn.Identity()
         self.norm = SafeLayerNorm(d_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -60,42 +63,106 @@ class TransformerTimeEncoder(nn.Module):
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)     # [B,K,N,H]
     
 
-class GraphMessagePassing(nn.Module):
-    """
-    x:   [B, N, D]
-    adj: [B, N, N]  (0/1 或帶權重; 只當 mask 也可)
-    """
-    def __init__(self, hidden_dim: int, dropout: float = 0.1):
+class MLPTimeEncoder(nn.Module):
+    def __init__(self, d_in, hidden, depth = 2, dropout: float = 0.1, K: int = 12):
         super().__init__()
-        self.q = nn.Linear(hidden_dim, hidden_dim, bias=False)
-        self.k = nn.Linear(hidden_dim, hidden_dim, bias=False)
-        self.v = nn.Linear(hidden_dim, hidden_dim, bias=False)
-        self.drop = nn.Dropout(dropout)
-        self.ln = nn.LayerNorm(hidden_dim)
+        layers = [nn.Linear(d_in, hidden), nn.GELU(), nn.Dropout(dropout)]
+        for _ in range(depth - 1):
+            layers += [nn.Linear(hidden, hidden), nn.GELU(), nn.Dropout(dropout)]
+        self.ff = nn.Sequential(*layers)
+        self.ln = nn.LayerNorm(hidden)
+        self.time_emb = nn.Embedding(K, hidden)
 
-    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        B, N, D = x.shape
-
-        # 一律加 self-loop 作為 mask 的一部分
-        I = torch.eye(N, device=x.device, dtype=adj.dtype).unsqueeze(0)  # [1,N,N]
-        adj = (adj > 0) | (I > 0)   # bool mask；若 adj 有權重，這裡用 >0 取 mask
-
-        Q = self.q(x)                          # [B,N,D]
-        K = self.k(x)                          # [B,N,D]
-        V = self.v(x)                          # [B,N,D]
-
-        scores = Q @ K.transpose(-1, -2)       # [B,N,N]
-        scores = scores / math.sqrt(D)
-
-        # masked softmax
-        scores = scores.masked_fill(~adj, float('-inf'))
-        attn = torch.softmax(scores, dim=-1)   # [B,N,N]
-        attn = self.drop(attn)
-
-        out = attn @ V                         # [B,N,D]
-        out = self.ln(x + self.drop(out))      # 殘差 + LN
-        return out
+    def forward(self, x):  # x: [B,K,N,D_in]    
+        B,K,N,D = x.shape
+        y = self.ff(x)                       # [B,K,N,H]
+        t = torch.arange(K, device=x.device)  # [K]
+        te = self.time_emb(t).view(1,K,1,-1)  # [1,K,1,H]
+        y = y + te
+        y = self.ln(y)
+        return y       
     
+# Attention    
+class TemporalAttentionPool(nn.Module):
+    def __init__(self, hidden, attn_hidden=128, dropout=0.1):
+        super().__init__()
+        # 先算attention score
+        self.scorer = nn.Sequential(
+            nn.LayerNorm(hidden), 
+            nn.Linear(hidden, attn_hidden), 
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(attn_hidden, 1)
+        )
+
+    def forward(self, X, mask=None):
+        B,K,N,Hd = X.shape
+        score = self.scorer(X).squeeze(-1)      # [B,K,N]
+        if mask is not None:
+            m = mask.squeeze(-1).float()        # [B,K,N]
+            score = score.masked_fill(m <= 0, float('-inf'))
+        alpha = score.softmax(dim=1)
+        z = (alpha.unsqueeze(-1) * X).sum(dim=1)  # [B,N,H]
+        return z, alpha.permute(0,2,1) 
+    
+
+class TemporalSelfAttention(nn.Module):
+    def __init__(self, hidden, nhead=4, num_layers=1, dropout=0.1):
+        super().__init__()
+        layer = nn.TransformerEncoderLayer(
+            d_model=hidden, nhead=nhead,
+            dim_feedforward=hidden*4,
+            dropout=dropout, batch_first=True, norm_first=True
+        )
+        self.enc = nn.TransformerEncoder(layer, num_layers=num_layers)
+        self.ln = nn.LayerNorm(hidden)
+
+    def forward(self, H, attn_mask=None, key_padding_mask=None):
+        # H: [B,K,N,H]
+        B,K,N,Hd = H.shape
+        x = H.permute(0,2,1,3).reshape(B*N, K, Hd)   # [B*N,K,H]
+        y = self.enc(x, mask=attn_mask, src_key_padding_mask=key_padding_mask)  # [B*N,K,H]
+        y = self.ln(y)
+        return y.reshape(B, N, K, Hd).permute(0,2,1,3)  # [B,K,N,H]
+           
+
+class GatedAttention(nn.Module):
+    def __init__(self, hidden, attn_hidden=128, dropout=0.1, modality_order=None):
+        super().__init__()
+        self.hidden = hidden
+        self.modality_order = modality_order or ["price", "finance", "news", "event"]
+        self.num_modalities = len(self.modality_order)
+        self.ga = nn.Sequential(
+            nn.LayerNorm(self.num_modalities * hidden),
+            nn.Linear(self.num_modalities * hidden, attn_hidden),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(attn_hidden, self.num_modalities)
+        )
+    def forward(self, H_dict: dict, mask_dict: dict = None):
+        Hs = [H_dict[m] for m in self.modality_order]  # list of [B,K,N,H]
+        B, K, N, H = Hs[0].shape
+        global_context = torch.cat(Hs, dim=-1)
+        scores = self.ga(global_context)
+
+        if mask_dict is not None:
+            masks = []
+            for m in self.modality_order:
+                mm = mask_dict.get(m, None)
+                if mm is None:
+                    mm = torch.ones((B, K, N, 1), device=global_context.device, dtype=torch.float32)
+                masks.append(mm)
+            MM = torch.stack(masks, dim=3).squeeze(-1)
+            scores = scores.masked_fill(MM <= 0, float('-inf'))
+        
+        alpha = F.softmax(scores, dim=-1)
+
+        stack_embeddings = torch.stack(Hs, dim=3)
+        weights_reshaped = alpha.unsqueeze(-1)
+        Z = torch.sum(stack_embeddings * weights_reshaped, dim=3)
+
+        return Z, alpha
+
 
 # Main model
 class ESGMultiModalModel(nn.Module):
@@ -113,207 +180,77 @@ class ESGMultiModalModel(nn.Module):
                  event_layers: int = 2,
                  ic_weight: float = 0.1,   
                  ic_type: str = "pearson",
-                 icl_weight: float = 0.05,  
-                 icl_tau: float = 0.07     
+                 cl_weight: float = 0.0,   
+                 cl_tau: float = 0.07,
                  ):
         super().__init__()
         self.ic_weight = ic_weight
         self.ic_type = ic_type
-        self.icl_weight =icl_weight     
-        self.icl_tau = icl_tau           
-
-    
-        self.enc_price = LSTMTimeEncoder(d_in=d_price, hidden=hidden,
-                                         num_layers=lstm_layers, bidirectional=lstm_bidirectional,
-                                         dropout=dropout, use_posenc=False)
-        self.enc_fin   = LSTMTimeEncoder(d_in=d_finance, hidden=hidden,
-                                         num_layers=lstm_layers, bidirectional=lstm_bidirectional,
-                                         dropout=dropout, use_posenc=False)
+        self.cl_weight = cl_weight
+        self.cl_tau = cl_tau
+        
+        # Encoders
+        # self.enc_price = LSTMTimeEncoder(d_in=d_price, hidden=hidden,
+        #                                  num_layers=lstm_layers, bidirectional=lstm_bidirectional,
+        #                                  dropout=dropout, use_posenc=False)
+        # self.enc_fin   = LSTMTimeEncoder(d_in=d_finance, hidden=hidden,
+        #                                  num_layers=lstm_layers, bidirectional=lstm_bidirectional,
+        #                                  dropout=dropout, use_posenc=False)
         self.enc_news  = TransformerTimeEncoder(d_in=d_news,  d_model=hidden,
                                                 nhead=nhead_time, num_layers=news_layers, dropout=dropout)
         self.enc_event = TransformerTimeEncoder(d_in=d_event, d_model=hidden,
                                                 nhead=nhead_time, num_layers=event_layers, dropout=dropout)
+        #mlp Encoders
+        self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
+        self.enc_fin   = MLPTimeEncoder(d_in=d_finance, hidden=hidden, depth=2, dropout=dropout, K=12)
+        # self.enc_news  = MLPTimeEncoder(d_in=d_news,   hidden=hidden, depth=news_layers, dropout=dropout, K=12)
+        # self.enc_event = MLPTimeEncoder(d_in=d_event,  hidden=hidden, depth=event_layers, dropout=dropout, K=12)
 
-        self.switch = SwitchEncoder(hidden_dim=hidden, depth=6, num_heads=4, dropout=dropout)
-
-        d_fused = hidden * 4
-        self.company_head = BoundedHead(in_dim=d_fused, lo=0.0, hi=1.0, dropout=dropout)
+        d_fused = hidden
         self.predictor = nn.Linear(d_fused, 1)
+        self.ln = nn.LayerNorm(hidden)
 
-        # self.proj_price = Projector(in_dim=hidden, hid=128, out_dim=128)
-        # self.proj_news  = Projector(in_dim=hidden, hid=128, out_dim=128)
-        # self.proj_fin  = Projector(in_dim=hidden, hid=128, out_dim=128)
-        # self.proj_event  = Projector(in_dim=hidden, hid=128, out_dim=128)
-
-        # self.deproj_price = nn.Linear(128, hidden)
-        # self.deproj_news  = nn.Linear(128, hidden)
-        # self.deproj_fin  = nn.Linear(128, hidden)
-        # self.deproj_event  = nn.Linear(128, hidden)
-
-        self.proj_price = nn.Identity()
-        self.proj_fin   = nn.Identity()
-        self.proj_news  = nn.Identity()
-        self.proj_event = nn.Identity()
-
-        self.deproj_price = nn.Identity()
-        self.deproj_fin   = nn.Identity()
-        self.deproj_news  = nn.Identity()
-        self.deproj_event = nn.Identity()
-
-        # 每個模態一個 LayerNorm
-        self.ln_price = nn.LayerNorm(hidden)
-        self.ln_fin   = nn.LayerNorm(hidden)
-        self.ln_news  = nn.LayerNorm(hidden)
-        self.ln_event = nn.LayerNorm(hidden)
-
-        self.gate_price = nn.Parameter(torch.tensor(0.0))
-        self.gate_fin   = nn.Parameter(torch.tensor(0.0))
-        self.gate_news  = nn.Parameter(torch.tensor(0.0))
-        self.gate_event = nn.Parameter(torch.tensor(0.0))
-
-        self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=0.1)  # 你的 attention 版或 GCN 版都行
-
-
-
-    def _encode_one_modality(self, x: torch.Tensor, adj: torch.Tensor, proj: nn.Module, norm: nn.Module) -> torch.Tensor:
-        """x: [B,K,N,Dm], adj: [B,K,N,N] -> H: [B,K,N,D] via per-step GRMP then temporal GRU."""
-        B, K, N, _ = x.shape
-        # project per step
-        X = proj(torch.clamp(norm(x), -1e3, 1e3))  # [B,K,N,D]
-        # per-timestep GRMP
-        h_steps = []
-        for k in range(K):
-            h_k = self.grmp(X[:, k], adj[:, k])  # [B,N,D]
-            h_steps.append(h_k)
-        H0 = torch.stack(h_steps, dim=1)  # [B,K,N,D]
-        # temporal GRU over K (node-wise)
-        H_in = H0.permute(0, 2, 1, 3).reshape(B * N, K, self.D)
-        H_out, _ = self.temporal_gru(H_in)
-        H = H_out.reshape(B, N, K, self.D).permute(0, 2, 1, 3)  # [B,K,N,D]
-        return H
+        self.ga = GatedAttention(hidden=hidden, attn_hidden=128, dropout=0.1, modality_order=["price","finance","news","event"])
+        self.temp_agg = TemporalAttentionPool(hidden=hidden, attn_hidden=128, dropout=0.1)
+        self.temp_selfattn = TemporalSelfAttention(hidden=hidden, nhead=4, num_layers=1, dropout=0.1)
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
-        # graph
-        adj = batch["network"]  # [B,K,N,N] bool
-    
-        label_company = batch.get("label_company", None)  # [B,1,N,1]
-        valid_mask_dict = batch.get("valid_mask_dict", None)  # Optional[Dict[str, torch.Tensor]]
+        adj = batch["network"]                           # [B,K,N,N] bool/0-1
+        label_company = batch.get("label_company", None) # [B,1,N,1]
 
-        # 1) encoders -> [B,K,N,H]
+        # encoders [B,K,N,H]
         Hp = self.enc_price(price)
         Hf = self.enc_fin(finance)
         Hn = self.enc_news(news)
         He = self.enc_event(event)
 
-        B, K, N, H = Hp.shape
-        device = Hp.device
+        # attention 
+        Hp = self.temp_selfattn(Hp)   # [B,K,N,H]
+        Hf = self.temp_selfattn(Hf)
+        Hn = self.temp_selfattn(Hn)
+        He = self.temp_selfattn(He)
 
-        # # 整批投影：H → z
-        # zp = self.proj_price(Hp.reshape(-1, H)).reshape(B, K, N, -1)   # [B,K,N,d]
-        # zf = self.proj_fin(  Hf.reshape(-1, H)).reshape(B, K, N, -1)
-        # zn = self.proj_news( Hn.reshape(-1, H)).reshape(B, K, N, -1)
-        # ze = self.proj_event(He.reshape(-1, H)).reshape(B, K, N, -1)
-        # d  = zp.size(-1)
+        H_dict = {"price":Hp, "finance":Hf, "news":Hn, "event":He}
+        mask_dict = {"price":None, "news":None, "event":None}
+        fm = batch.get("finance_mask", None)
+        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0)
+        mask_dict["finance"] = fm
 
-        zp, zf, zn, ze = Hp, Hf, Hn, He
-        d = H
+        Z_time, alpha = self.ga(H_dict, mask_dict=mask_dict)  # [B,K,N,H]
+        Z_year, alpha_time   = self.temp_agg(Z_time, mask=None) 
+        print(alpha_time)
 
-        # Positive-only CL（依照月份 六個組合）
-        Mask_all = valid_mask_dict if valid_mask_dict is not None else {}
-        for k in ("price","finance","news","event"):
-            if (k not in Mask_all) or (Mask_all[k] is None):
-                Mask_all[k] = torch.ones(B, K, N, dtype=torch.bool, device=device)
+        # Z = torch.cat([
+        #     Hp[:, -1],   # [B,N,H]
+        #     Hf[:, -1],
+        #     Hn[:, -1],
+        #     He[:, -1],
+        # ], dim=-1)  # [B,N, 4H]
 
-        def pos_only_pair_loss(zA, zB):
-            # zA,zB: [M', d]（已 L2；正樣本對齊）
-            if zA.numel() == 0 or zA.size(0) == 0:
-                return zA.new_tensor(0.0)
-            cos = F.cosine_similarity(zA, zB, dim=-1)  # [M']
-            return (1.0 - cos).mean()
-
-        loss_con_t = []
-        for t in range(K):
-            Zp_t = zp[:, t].reshape(B*N, d)
-            Zf_t = zf[:, t].reshape(B*N, d)
-            Zn_t = zn[:, t].reshape(B*N, d)
-            Ze_t = ze[:, t].reshape(B*N, d)
-
-            mp = Mask_all['price'][:,  t].reshape(B*N)
-            mf = Mask_all['finance'][:,t].reshape(B*N)
-            mn = Mask_all['news'][:,  t].reshape(B*N)
-            me = Mask_all['event'][:, t].reshape(B*N)
-
-            pairs = [
-                # (zA_all, zB_all, mask, predA, predB)
-                (Zp_t, Zf_t, mp & mf),   # p↔f
-                (Zp_t, Zn_t, mp & mn),  # p↔n
-                (Zp_t, Ze_t, mp & me), # p↔e
-                (Zf_t, Zn_t, mf & mn),  # f↔n
-                (Zf_t, Ze_t, mf & me), # f↔e
-                (Zn_t, Ze_t, mn & me), # n↔e
-            ]
-
-            lp = []
-            for zA_all, zB_all, m in pairs:
-                idx = m.nonzero(as_tuple=False).squeeze(1)
-                if idx.numel() == 0:
-                    continue
-                zA = zA_all.index_select(0, idx)  # [M', d] 先用 mask 篩好
-                zB = zB_all.index_select(0, idx)
-                lp.append(pos_only_pair_loss(zA, zB))
-
-            if lp:
-                loss_con_t.append(torch.stack(lp).mean())
-
-        loss_con = torch.stack(loss_con_t).mean() if loss_con_t else Hp.new_tensor(0.0) 
-
-
-
-        # 用 z 接回去：deproj + 門控殘差 + LN → 丟進 switch
-        ap = torch.sigmoid(self.gate_price)
-        af = torch.sigmoid(self.gate_fin)
-        an = torch.sigmoid(self.gate_news)
-        ae = torch.sigmoid(self.gate_event)
-
-        # # deproj 接收 [..., d]，所以先展平再 reshape 回來
-        # Hp_fused = self.ln_price(Hp + ap * self.deproj_price(zp.reshape(-1, d)).reshape(B, K, N, H))
-        # Hf_fused = self.ln_fin(  Hf + af * self.deproj_fin(  zf.reshape(-1, d)).reshape(B, K, N, H))
-        # Hn_fused = self.ln_news(Hn + an * self.deproj_news( zn.reshape(-1, d)).reshape(B, K, N, H))
-        # He_fused = self.ln_event(He + ae * self.deproj_event(ze.reshape(-1, d)).reshape(B, K, N, H))
-
-        Hp_fused = self.ln_price(Hp +ap * zp)
-        Hf_fused = self.ln_fin(  Hf +af * zf)
-        Hn_fused = self.ln_news(Hn +an * zn)
-        He_fused = self.ln_event(He +ae * ze)
-        updated_list, fused = self.switch([Hp_fused, Hf_fused, Hn_fused, He_fused])  # switch 需能接受特徵維 d
-
-        def apply_gmp_seq(Hseq: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-            # Hseq: [B,K,N,H], adj: [B,K,N,N]
-            h_steps = []
-            for t in range(K):
-                h_t = self.grmp(Hseq[:, t], adj[:, t])  # [B,N,H]
-                h_steps.append(h_t)
-            return torch.stack(h_steps, dim=1)          # [B,K,N,H]
-        
-        Hp_msg = apply_gmp_seq(updated_list[0], adj)
-        Hf_msg = apply_gmp_seq(updated_list[1], adj)
-        Hn_msg = apply_gmp_seq(updated_list[2], adj)
-        He_msg = apply_gmp_seq(updated_list[3], adj)
-
-
-
-        # time pooling -> [B,N,H]
-        P  = Hp_msg[0].mean(dim=1)
-        Fin  = Hf_msg[1].mean(dim=1)
-        Nw = Hn_msg[2].mean(dim=1)
-        E  = He_msg[3].mean(dim=1)
-
-        # fusion + predict
-        Z = torch.cat([P, Fin, Nw, E], dim=-1) # P,F,E,Nw
-        pred_company = self.company_head(Z).unsqueeze(1)  # [B,1,N,1]
-        pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
-
+        # Z = torch.cat([zp, zf, zn, ze], dim=-1)  # [B,N,4H]
+  
+        pred_company = self.predictor(Z_year).unsqueeze(1)  # [B,1,N,1]
         out = {"pred_company": pred_company}
 
         if label_company is not None:
@@ -324,24 +261,26 @@ class ESGMultiModalModel(nn.Module):
             denom = valid.float().sum().clamp_min(1.0)
             mse_company = diff2.sum() / denom
 
+            # IC company-level
             pN = torch.nan_to_num(p.squeeze(1).squeeze(-1), nan=0.0)  # [B,N]
             tN = torch.nan_to_num(t.squeeze(1).squeeze(-1), nan=0.0)  # [B,N]
-            ic_per_b = _pearson_corr(pN, tN, dim=1)               # [B]
+            ic_per_b = _pearson_corr(pN, tN, dim=1)                    # [B]
             ic_company = ic_per_b.mean()
 
-            total = mse_company + self.icl_weight * loss_con + self.ic_weight * ((1.0 - ic_company)/2)
-            # total = mse_company
+            total = (
+                mse_company
+                + self.ic_weight * ((1.0 - ic_company) / 2.0)
+            )
 
             out["losses"] = {
                 "mse": mse_company,
-                "ic_company": ic_company,  
-                "icl": loss_con,          
+                "ic_company": ic_company,
                 "total": total
             }
-
         return out
-
-
+    
+   
+    
 
 
 

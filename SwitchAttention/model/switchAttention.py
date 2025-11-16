@@ -52,7 +52,7 @@ class SwitchMultiModalBlock(nn.Module):
 
         inp_dtype = Q.dtype  # 記下進來時的 dtype（多半是 float32）
 
-        # ✅ 所有 Linear + SDPA 都放在 autocast 內
+        #  所有 Linear + SDPA 都放在 autocast 內
         with torch.autocast(device_type='cuda', dtype=torch.float16):
             Qh = self.q_proj(Q).view(B, SQ, self.num_heads, d).transpose(1, 2)
             Kh = self.k_proj(K).view(B, SK, self.num_heads, d).transpose(1, 2)
@@ -63,7 +63,7 @@ class SwitchMultiModalBlock(nn.Module):
             )  # [B, heads, SQ, d]
 
             out = out.transpose(1, 2).contiguous().view(B, SQ, H)
-            out = self.out_proj(out)  # ✅ 線性也在 autocast 內
+            out = self.out_proj(out)  # 線性也在 autocast 內
 
         # 回到呼叫者原本的 dtype（通常 fp32），避免後續層再出現 dtype mismatch
         return out.to(dtype=inp_dtype)
