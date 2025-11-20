@@ -38,61 +38,6 @@ class LSTMTimeEncoder(nn.Module):
         h = self.proj_out(h)                                 # [B*N,K,H]
         h = self.norm(h)
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)    # [B,K,N,H]
-    
-class TemporalLSTM(nn.Module):
-    """
-    將 [B,K,N,H] 的月序列做時間整合：
-      - return_mode='sequence'：回傳整段序列 [B,K,N,H]
-      - return_mode='last'    ：回傳最後一步 [B,N,H]
-    """
-    def __init__(self,
-                 hidden: int,
-                 num_layers: int = 1,
-                 bidirectional: bool = False,
-                 dropout: float = 0.1,
-                 return_mode: str = "sequence"):  # 'sequence' | 'last'
-        super().__init__()
-        self.hidden = hidden
-        self.return_mode = return_mode
-        h = hidden // 2 if bidirectional else hidden
-
-        self.lstm = nn.LSTM(
-            input_size=hidden, hidden_size=h,
-            num_layers=num_layers, batch_first=True,
-            bidirectional=bidirectional,
-            dropout=dropout if num_layers > 1 else 0.0
-        )
-        out_dim = h * 2
-        # self.proj_out = nn.Linear(out_dim, hidden) if out_dim != hidden else nn.Identity()
-        # self.ln = nn.LayerNorm(hidden)
-
-    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
-        """
-        x:    [B,K,N,H]
-        mask: [B,K,N,1] 或 [B,K,N]，1=有效
-        回傳：
-          - 若 return_mode == 'sequence'：y_seq [B,K,N,H], None
-          - 其他模式：z [B,N,H], alpha(若 attn 才回傳，shape [B,N,K]) 或 None
-        """
-        B, K, N, H = x.shape
-        # [B,K,N,H] -> [B*N, K, H]
-        seq = x.permute(0, 2, 1, 3).reshape(B * N, K, H)
-
-        y, _ = self.lstm(seq)             # [B*N,K,out_dim]
-        # y = self.proj_out(y)              # [B*N,K,H]
-        # y = self.ln(y)
-        y_seq = y.reshape(B, N, K, H).permute(0, 2, 1, 3)  # [B,K,N,H]
-
-        if self.return_mode == "sequence":
-            return y_seq, None
-
-        # 之後是各種聚合到 [B,N,H]
-        if self.return_mode == "last":
-            z = y_seq[:, -1]  # [B,N,H]
-            return z, None
-
-        raise ValueError(f"Unknown return_mode={self.return_mode}")
-
 
 class TransformerTimeEncoder(nn.Module):
     def __init__(self, d_in: int, d_model: int, nhead: int = 4, num_layers: int = 2, dim_ff: int = 4, dropout: float = 0.1, use_posenc: bool = True):
@@ -137,6 +82,89 @@ class MLPTimeEncoder(nn.Module):
         return y       
     
 # Attention    
+# class TemporalAggregator(nn.Module):
+#     def __init__(self, hidden, num_heads=4, dropout=0.1):
+#         super().__init__()
+#         self.attn = nn.MultiheadAttention(
+#             embed_dim=hidden, num_heads=num_heads,
+#             dropout=dropout, batch_first=True
+#         )
+
+#     def forward(self, Z_time):  # [B,K,N,H]
+#         B,K,N,H = Z_time.shape
+#         # 每家公司單獨跑一次 attention
+#         Z_time = Z_time.permute(0,2,1,3).reshape(B*N, K, H)  # [B*N,K,H]
+
+#         # 用一個 learnable 的 global query 來 pool
+#         # 這裡簡化：把第一個 time step 當 query，其實可以改成專門的 q 向量
+#         q = Z_time[:, :1, :]         # [B*N,1,H]
+#         k = v = Z_time               # [B*N,K,H]
+
+#         z, attn = self.attn(q, k, v) # z:[B*N,1,H], attn:[B*N,1,K]
+#         z = z.squeeze(1)             # [B*N,H]
+#         attn = attn.squeeze(1)       # [B*N,K]
+
+#         z = z.reshape(B,N,H)
+#         attn = attn.reshape(B,N,K)
+#         return z, attn
+    
+# class TemporalAggregator(nn.Module):
+#     def __init__(self, hidden, num_heads=4, dropout=0.1):
+#         super().__init__()
+#         self.attn = nn.MultiheadAttention(
+#             embed_dim=hidden,
+#             num_heads=num_heads,
+#             dropout=dropout,
+#             batch_first=True,     # 所以 attn 的 input 是 [B, L, H]
+#         )
+#         # 專門的「global query」：[1, 1, H]
+#         self.query = nn.Parameter(torch.randn(1, 1, hidden))
+
+#     def forward(self, Z_time, mask: torch.Tensor = None):
+#         """
+#         Z_time: [B,K,N,H]
+#         mask:   [B,K,N,1] or [B,K,N]，1=有效、0=padding（選用）
+#         回傳:
+#           z:     [B,N,H]
+#           attn:  [B,N,K]  （每家公司對每個月份的權重）
+#         """
+#         B, K, N, H = Z_time.shape
+
+#         # [B,K,N,H] -> [B,N,K,H] -> [B*N,K,H]
+#         seq = Z_time.permute(0, 2, 1, 3).reshape(B * N, K, H)   # K = time steps
+
+#         # ==== 準備 query ====
+#         # self.query: [1,1,H]  -> 複製成每家公司一個 query
+#         q = self.query.expand(B * N, 1, H)                      # [B*N,1,H]
+
+#         # MultiheadAttention 的 key_padding_mask 形狀是 [batch, seq_len] = [B*N, K]
+#         key_padding_mask = None
+#         if mask is not None:
+#             # 先變成 [B,K,N]
+#             if mask.dim() == 4:          # [B,K,N,1]
+#                 mask = mask.squeeze(-1)
+#             # mask: 1=有效 → key_padding_mask 要求  True=要遮 → 所以取反
+#             # 先整理成 [B,N,K] 再 flatten
+#             mask_bnK = mask.permute(0, 2, 1)        # [B,N,K]
+#             key_padding_mask = (mask_bnK.reshape(B * N, K) == 0)  # bool [B*N,K]
+
+#         # ==== Attention ====
+#         # q:   [B*N,1,H]
+#         # k,v: [B*N,K,H]
+#         # key_padding_mask: [B*N,K]，True 代表該位置被遮
+#         z, attn = self.attn(
+#             q, seq, seq,
+#             key_padding_mask=key_padding_mask
+#         )                           # z: [B*N,1,H], attn: [B*N,1,K]
+
+#         z = z.squeeze(1)            # [B*N,H]
+#         attn = attn.squeeze(1)      # [B*N,K]
+
+#         # 還原成 [B,N,H] [B,N,K]
+#         z = z.reshape(B, N, H)
+#         attn = attn.reshape(B, N, K)
+#         return z, attn
+
 class TemporalAttentionAggregator(nn.Module):
     """
     將 Z_time ∈ [B,K,N,H] 聚合為 Z_year ∈ [B,N,H]
@@ -153,22 +181,17 @@ class TemporalAttentionAggregator(nn.Module):
 
     def forward(self, Z_time: torch.Tensor, mask: torch.Tensor = None):
         # Z_time: [B,K,N,H]
-        # mask: [B,K,N,1] (可選)
-        
-        # 計算分數
         scores = self.scorer(Z_time) #(B,K,N,1)
-        
+    
         if mask is not None:
             scores = scores.masked_fill(mask <= 0, float('-inf'))
             
-        # 2. Softmax (dim=k)
         alpha_time = F.softmax(scores, dim=1) # [B,K,N,1]
         
-        # 3. 加權求和
         # (B,K,N,1) * (B,K,N,H) -> (B,K,N,H)
         # sum over dim=1 (K) -> (B,N,H)
         Z_year = torch.sum(alpha_time * Z_time, dim=1)
-        
+    
         # alpha_time [B,K,N,1] -> [B,N,K]
         alpha_to_viz = alpha_time.squeeze(-1).permute(0, 2, 1)
         
@@ -212,6 +235,11 @@ class ESGMultiModalModel(nn.Module):
         self.news_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
         self.event_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
 
+        # self.price_attn = TemporalAggregator(hidden=hidden, dropout=dropout)
+        # self.fin_attn = TemporalAggregator(hidden=hidden, dropout=dropout)
+        # self.news_attn = TemporalAggregator(hidden=hidden, dropout=dropout)
+        # self.event_attn = TemporalAggregator(hidden=hidden, dropout=dropout)
+
         d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
         self.ln = nn.LayerNorm(hidden)
@@ -231,10 +259,17 @@ class ESGMultiModalModel(nn.Module):
         if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1]
 
         # # [B,K,N,H] -> [B,N,H]
-        Zp, alpha_p = self.price_attn(Hp, mask=None) 
-        Zf, alpha_f = self.fin_attn(Hf, mask=fm) 
-        Zn, alpha_n = self.news_attn(Hn, mask=None)
-        Ze, alpha_e = self.event_attn(He, mask=None)
+        # Zp, alpha_p = self.price_attn(Hp, mask=None) 
+        # Zf, alpha_f = self.fin_attn(Hf, mask=fm) 
+        # Zn, alpha_n = self.news_attn(Hn, mask=None)
+        # Ze, alpha_e = self.event_attn(He, mask=None)
+
+        Zp, alpha_p = self.price_attn(Hp) 
+        Zf, alpha_f = self.fin_attn(Hf) 
+        Zn, alpha_n = self.news_attn(Hn)
+        Ze, alpha_e = self.event_attn(He)
+
+
 
         # [B,N,H] * 4 -> [B,N, 4*H]
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
