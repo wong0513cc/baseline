@@ -25,7 +25,7 @@ class LSTMTimeEncoder(nn.Module):
         )
         out_dim = h * (2 if bidirectional else 1)
         self.proj_out = nn.Linear(out_dim, hidden) if out_dim != hidden else nn.Identity()
-        self.posenc = PositionalEncoding(d_in) if use_posenc else nn.Identity()
+        self.posenc = PositionalEncoding(hidden) if use_posenc else nn.Identity()
         self.norm = SafeLayerNorm(hidden)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -38,6 +38,60 @@ class LSTMTimeEncoder(nn.Module):
         h = self.proj_out(h)                                 # [B*N,K,H]
         h = self.norm(h)
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)    # [B,K,N,H]
+    
+class TemporalLSTM(nn.Module):
+    """
+    將 [B,K,N,H] 的月序列做時間整合：
+      - return_mode='sequence'：回傳整段序列 [B,K,N,H]
+      - return_mode='last'    ：回傳最後一步 [B,N,H]
+    """
+    def __init__(self,
+                 hidden: int,
+                 num_layers: int = 1,
+                 bidirectional: bool = False,
+                 dropout: float = 0.1,
+                 return_mode: str = "sequence"):  # 'sequence' | 'last'
+        super().__init__()
+        self.hidden = hidden
+        self.return_mode = return_mode
+        h = hidden // 2 if bidirectional else hidden
+
+        self.lstm = nn.LSTM(
+            input_size=hidden, hidden_size=h,
+            num_layers=num_layers, batch_first=True,
+            bidirectional=bidirectional,
+            dropout=dropout if num_layers > 1 else 0.0
+        )
+        out_dim = h * 2
+        # self.proj_out = nn.Linear(out_dim, hidden) if out_dim != hidden else nn.Identity()
+        # self.ln = nn.LayerNorm(hidden)
+
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
+        """
+        x:    [B,K,N,H]
+        mask: [B,K,N,1] 或 [B,K,N]，1=有效
+        回傳：
+          - 若 return_mode == 'sequence'：y_seq [B,K,N,H], None
+          - 其他模式：z [B,N,H], alpha(若 attn 才回傳，shape [B,N,K]) 或 None
+        """
+        B, K, N, H = x.shape
+        # [B,K,N,H] -> [B*N, K, H]
+        seq = x.permute(0, 2, 1, 3).reshape(B * N, K, H)
+
+        y, _ = self.lstm(seq)             # [B*N,K,out_dim]
+        # y = self.proj_out(y)              # [B*N,K,H]
+        # y = self.ln(y)
+        y_seq = y.reshape(B, N, K, H).permute(0, 2, 1, 3)  # [B,K,N,H]
+
+        if self.return_mode == "sequence":
+            return y_seq, None
+
+        # 之後是各種聚合到 [B,N,H]
+        if self.return_mode == "last":
+            z = y_seq[:, -1]  # [B,N,H]
+            return z, None
+
+        raise ValueError(f"Unknown return_mode={self.return_mode}")
 
 
 class TransformerTimeEncoder(nn.Module):
@@ -83,85 +137,43 @@ class MLPTimeEncoder(nn.Module):
         return y       
     
 # Attention    
-class TemporalAttentionPool(nn.Module):
-    def __init__(self, hidden, attn_hidden=128, dropout=0.1):
+class TemporalAttentionAggregator(nn.Module):
+    """
+    將 Z_time ∈ [B,K,N,H] 聚合為 Z_year ∈ [B,N,H]
+    """
+    def __init__(self, hidden: int, attn_hidden: int = 128, dropout: float = 0.1):
         super().__init__()
-        # 先算attention score
         self.scorer = nn.Sequential(
-            nn.LayerNorm(hidden), 
-            nn.Linear(hidden, attn_hidden), 
-            nn.ReLU(),
+            nn.LayerNorm(hidden),
+            nn.Linear(hidden, attn_hidden),
+            nn.GELU(),
             nn.Dropout(dropout),
             nn.Linear(attn_hidden, 1)
         )
 
-    def forward(self, X, mask=None):
-        B,K,N,Hd = X.shape
-        score = self.scorer(X).squeeze(-1)      # [B,K,N]
-        if mask is not None:
-            m = mask.squeeze(-1).float()        # [B,K,N]
-            score = score.masked_fill(m <= 0, float('-inf'))
-        alpha = score.softmax(dim=1)
-        z = (alpha.unsqueeze(-1) * X).sum(dim=1)  # [B,N,H]
-        return z, alpha.permute(0,2,1) 
-    
-
-class TemporalSelfAttention(nn.Module):
-    def __init__(self, hidden, nhead=4, num_layers=1, dropout=0.1):
-        super().__init__()
-        layer = nn.TransformerEncoderLayer(
-            d_model=hidden, nhead=nhead,
-            dim_feedforward=hidden*4,
-            dropout=dropout, batch_first=True, norm_first=True
-        )
-        self.enc = nn.TransformerEncoder(layer, num_layers=num_layers)
-        self.ln = nn.LayerNorm(hidden)
-
-    def forward(self, H, attn_mask=None, key_padding_mask=None):
-        # H: [B,K,N,H]
-        B,K,N,Hd = H.shape
-        x = H.permute(0,2,1,3).reshape(B*N, K, Hd)   # [B*N,K,H]
-        y = self.enc(x, mask=attn_mask, src_key_padding_mask=key_padding_mask)  # [B*N,K,H]
-        y = self.ln(y)
-        return y.reshape(B, N, K, Hd).permute(0,2,1,3)  # [B,K,N,H]
-           
-
-class GatedAttention(nn.Module):
-    def __init__(self, hidden, attn_hidden=128, dropout=0.1, modality_order=None):
-        super().__init__()
-        self.hidden = hidden
-        self.modality_order = modality_order or ["price", "finance", "news", "event"]
-        self.num_modalities = len(self.modality_order)
-        self.ga = nn.Sequential(
-            nn.LayerNorm(self.num_modalities * hidden),
-            nn.Linear(self.num_modalities * hidden, attn_hidden),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(attn_hidden, self.num_modalities)
-        )
-    def forward(self, H_dict: dict, mask_dict: dict = None):
-        Hs = [H_dict[m] for m in self.modality_order]  # list of [B,K,N,H]
-        B, K, N, H = Hs[0].shape
-        global_context = torch.cat(Hs, dim=-1)
-        scores = self.ga(global_context)
-
-        if mask_dict is not None:
-            masks = []
-            for m in self.modality_order:
-                mm = mask_dict.get(m, None)
-                if mm is None:
-                    mm = torch.ones((B, K, N, 1), device=global_context.device, dtype=torch.float32)
-                masks.append(mm)
-            MM = torch.stack(masks, dim=3).squeeze(-1)
-            scores = scores.masked_fill(MM <= 0, float('-inf'))
+    def forward(self, Z_time: torch.Tensor, mask: torch.Tensor = None):
+        # Z_time: [B,K,N,H]
+        # mask: [B,K,N,1] (可選)
         
-        alpha = F.softmax(scores, dim=-1)
+        # 計算分數
+        scores = self.scorer(Z_time) #(B,K,N,1)
+        
+        if mask is not None:
+            scores = scores.masked_fill(mask <= 0, float('-inf'))
+            
+        # 2. Softmax (dim=k)
+        alpha_time = F.softmax(scores, dim=1) # [B,K,N,1]
+        
+        # 3. 加權求和
+        # (B,K,N,1) * (B,K,N,H) -> (B,K,N,H)
+        # sum over dim=1 (K) -> (B,N,H)
+        Z_year = torch.sum(alpha_time * Z_time, dim=1)
+        
+        # alpha_time [B,K,N,1] -> [B,N,K]
+        alpha_to_viz = alpha_time.squeeze(-1).permute(0, 2, 1)
+        
+        return Z_year, alpha_to_viz
 
-        stack_embeddings = torch.stack(Hs, dim=3)
-        weights_reshaped = alpha.unsqueeze(-1)
-        Z = torch.sum(stack_embeddings * weights_reshaped, dim=3)
-
-        return Z, alpha
 
 
 # Main model
@@ -188,31 +200,21 @@ class ESGMultiModalModel(nn.Module):
         self.ic_type = ic_type
         self.cl_weight = cl_weight
         self.cl_tau = cl_tau
-        
-        # Encoders
-        # self.enc_price = LSTMTimeEncoder(d_in=d_price, hidden=hidden,
-        #                                  num_layers=lstm_layers, bidirectional=lstm_bidirectional,
-        #                                  dropout=dropout, use_posenc=False)
-        # self.enc_fin   = LSTMTimeEncoder(d_in=d_finance, hidden=hidden,
-        #                                  num_layers=lstm_layers, bidirectional=lstm_bidirectional,
-        #                                  dropout=dropout, use_posenc=False)
-        self.enc_news  = TransformerTimeEncoder(d_in=d_news,  d_model=hidden,
-                                                nhead=nhead_time, num_layers=news_layers, dropout=dropout)
-        self.enc_event = TransformerTimeEncoder(d_in=d_event, d_model=hidden,
-                                                nhead=nhead_time, num_layers=event_layers, dropout=dropout)
-        #mlp Encoders
-        self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
-        self.enc_fin   = MLPTimeEncoder(d_in=d_finance, hidden=hidden, depth=2, dropout=dropout, K=12)
-        # self.enc_news  = MLPTimeEncoder(d_in=d_news,   hidden=hidden, depth=news_layers, dropout=dropout, K=12)
-        # self.enc_event = MLPTimeEncoder(d_in=d_event,  hidden=hidden, depth=event_layers, dropout=dropout, K=12)
 
-        d_fused = hidden
+        # Encoders
+        self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
+        self.enc_fin   = LSTMTimeEncoder(d_in=d_finance, hidden=hidden, num_layers=1,dropout=dropout)
+        self.enc_news  = TransformerTimeEncoder(d_in=d_news,  d_model=hidden, nhead=nhead_time, num_layers=news_layers,  dropout=dropout)
+        self.enc_event = MLPTimeEncoder(d_in=d_event, hidden=hidden, depth=2, dropout=dropout, K=12)
+
+        self.price_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.fin_attn= TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.news_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.event_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+
+        d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
         self.ln = nn.LayerNorm(hidden)
-
-        self.ga = GatedAttention(hidden=hidden, attn_hidden=128, dropout=0.1, modality_order=["price","finance","news","event"])
-        self.temp_agg = TemporalAttentionPool(hidden=hidden, attn_hidden=128, dropout=0.1)
-        self.temp_selfattn = TemporalSelfAttention(hidden=hidden, nhead=4, num_layers=1, dropout=0.1)
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
@@ -224,34 +226,26 @@ class ESGMultiModalModel(nn.Module):
         Hf = self.enc_fin(finance)
         Hn = self.enc_news(news)
         He = self.enc_event(event)
-
-        # attention 
-        Hp = self.temp_selfattn(Hp)   # [B,K,N,H]
-        Hf = self.temp_selfattn(Hf)
-        Hn = self.temp_selfattn(Hn)
-        He = self.temp_selfattn(He)
-
-        H_dict = {"price":Hp, "finance":Hf, "news":Hn, "event":He}
-        mask_dict = {"price":None, "news":None, "event":None}
+        
         fm = batch.get("finance_mask", None)
-        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0)
-        mask_dict["finance"] = fm
+        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1]
 
-        Z_time, alpha = self.ga(H_dict, mask_dict=mask_dict)  # [B,K,N,H]
-        Z_year, alpha_time   = self.temp_agg(Z_time, mask=None) 
-        print(alpha_time)
+        # # [B,K,N,H] -> [B,N,H]
+        Zp, alpha_p = self.price_attn(Hp, mask=None) 
+        Zf, alpha_f = self.fin_attn(Hf, mask=fm) 
+        Zn, alpha_n = self.news_attn(Hn, mask=None)
+        Ze, alpha_e = self.event_attn(He, mask=None)
 
-        # Z = torch.cat([
-        #     Hp[:, -1],   # [B,N,H]
-        #     Hf[:, -1],
-        #     Hn[:, -1],
-        #     He[:, -1],
-        # ], dim=-1)  # [B,N, 4H]
+        # [B,N,H] * 4 -> [B,N, 4*H]
+        Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
+        pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
-        # Z = torch.cat([zp, zf, zn, ze], dim=-1)  # [B,N,4H]
-  
-        pred_company = self.predictor(Z_year).unsqueeze(1)  # [B,1,N,1]
         out = {"pred_company": pred_company}
+        
+        out["alpha_time_price"] = alpha_p
+        out["alpha_time_fin"] = alpha_f
+        out["alpha_time_news"] = alpha_n
+        out["alpha_time_event"] = alpha_e
 
         if label_company is not None:
             p = pred_company                  # [B,1,N,1]
@@ -277,6 +271,7 @@ class ESGMultiModalModel(nn.Module):
                 "ic_company": ic_company,
                 "total": total
             }
+            
         return out
     
    

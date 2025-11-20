@@ -24,6 +24,84 @@ from baseline import _gather_split_labels, compute_and_save_baselines, _to_numpy
 
 TARGET2IDX = {"env": 0, "soc": 1, "gov": 2}
 
+def plot_temporal_attention_heatmap(alphas_dict: Dict[str, List[np.ndarray]], out_path: str, title: str):
+    """
+    繪製 4x12 的時間注意力熱圖 (支援不同 N 的批次)
+    
+    Args:
+        alphas_dict (dict): 
+            key 是模態名稱 (e.g., "price"), 
+            value 是 numpy 陣列的 *列表*
+            例如: {"price": [array([B1, N1, 12]), array([B2, N2, 12])], ...}
+        out_path (str): 圖片儲存路徑
+        title (str): 圖片標題
+    """
+    modalities = ["price", "fin", "news", "event"]
+    if not all(m in alphas_dict for m in modalities):
+        print(f"Warning: Not all modalities found. Skipping plot.")
+        return
+
+    K = alphas_dict["price"][0].shape[-1] # 獲取時間步長 (e.g., 12)
+    
+    # 1. 計算 "加權" 平均注意力
+    avg_alphas = []
+    for m in modalities:
+        batch_alphas_list = alphas_dict[m] # 這是 [array([B1,N1,K]), array([B2,N2,K]), ...]
+        
+        total_weighted_sum = np.zeros(K)
+        total_samples = 0
+        
+        for batch_alpha_array in batch_alphas_list:
+            # batch_alpha_array is [B, N, K] (例如 [1, 1066, 12])
+            
+            # 總樣本數 = B * N
+            num_samples_in_batch = batch_alpha_array.shape[0] * batch_alpha_array.shape[1]
+            
+            # (B, N, K) -> (K,) 
+            # 先計算這個 batch (例如 B=1, N=1066) 的平均
+            mean_alpha_this_batch = np.mean(batch_alpha_array, axis=(0, 1)) # [K,]
+            
+            # 累加 (平均值 * 樣本數)
+            total_weighted_sum += (mean_alpha_this_batch * num_samples_in_batch)
+            total_samples += num_samples_in_batch
+        
+        # 最終的加權平均值
+        if total_samples == 0:
+            avg_alpha_m = np.zeros(K) # 避免除以 0
+        else:
+            avg_alpha_m = total_weighted_sum / total_samples # [K,]
+        
+        avg_alphas.append(avg_alpha_m)
+        
+    # 2. 堆疊成 (4, 12) 的矩陣
+    heatmap_data = np.stack(avg_alphas, axis=0) # [4, K]
+    
+    # 3. 繪圖 (這部分程式碼完全不用改)
+    fig, ax = plt.subplots(figsize=(10, 3))
+    im = ax.imshow(heatmap_data, cmap="viridis", aspect="auto")
+    
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.set_label("Average Attention Weight")
+    
+    ax.set_yticks(np.arange(len(modalities)))
+    ax.set_yticklabels(modalities)
+    ax.set_xticks(np.arange(K))
+    ax.set_xticklabels(np.arange(1, K + 1)) # 月份 1 到 12
+    
+    ax.set_xlabel("Time Step (Month)")
+    ax.set_ylabel("Modality")
+    ax.set_title(title)
+    
+    # 在格子裡顯示數字
+    for i in range(len(modalities)):
+        for j in range(K):
+            text = ax.text(j, i, f"{heatmap_data[i, j]:.2f}",
+                           ha="center", va="center", color="w" if heatmap_data[i, j] < 0.5 else "k")
+            
+    fig.tight_layout()
+    plt.savefig(out_path)
+    plt.close(fig)
+
 # Train/Eval
 
 def move_inputs(batch: dict, device: torch.device, target: str):
@@ -129,7 +207,8 @@ def evaluate(model: nn.Module,
              loaders_by_year: Dict[int, DataLoader],
              device: torch.device,
              args,
-             desc="val") -> Tuple[Dict[str, float], Dict[int, dict]]:
+             desc="val",
+             plot_attn=False) -> Tuple[Dict[str, float], Dict[int, dict]]:
     """
     評估使用「公司層級」：
       - 取 pred_company [B,1,N,1] 與 label_company [B,1,N,1]
@@ -142,7 +221,8 @@ def evaluate(model: nn.Module,
     per_year = {}
 
     all_preds_company, all_labels_company = [], []
-
+    all_alphas = {"price": [], "fin": [], "news": [], "event": []}
+    has_alphas = True
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
         preds_y_list, labels_y_list = [], []
@@ -161,6 +241,18 @@ def evaluate(model: nn.Module,
             # 攤平成向量（B*N）
             preds_y_list.append(pc.reshape(-1))
             labels_y_list.append(lc.reshape(-1))
+
+            if plot_attn:
+                try:
+                    all_alphas["price"].append(out["alpha_time_price"].cpu().numpy())
+                    all_alphas["fin"].append(out["alpha_time_fin"].cpu().numpy())
+                    all_alphas["news"].append(out["alpha_time_news"].cpu().numpy())
+                    all_alphas["event"].append(out["alpha_time_event"].cpu().numpy())
+                except KeyError as e:
+                    if has_alphas: 
+                        print(f"Warning: Model output missing key ({e}). No attention plot.")
+                    has_alphas = False
+                    plot_attn = False
 
             # 盡力從 raw 取 symbols（batch_size=1 時最準確）
             syms = raw.get("symbols", None)
@@ -225,6 +317,28 @@ def evaluate(model: nn.Module,
         rmse_mean  = float(np.sqrt(np.mean((Y - Y.mean())**2)))
         # print(f"[DBG2][{desc}] RMSE(model)={rmse_model:.4f} vs RMSE(mean)={rmse_mean:.4f}")
         # print(f"[DBG3][{desc}] pred std={float(Yh.std()):.4f}  true std={float(Y.std()):.4f}")
+
+    if plot_attn and has_alphas and len(all_alphas["price"]) > 0:
+        
+        # !! 我們不再 concatenate !!
+        # full_alphas = {}
+        # for key in all_alphas:
+        #    full_alphas[key] = np.concatenate(all_alphas[key], axis=0) # <--- 錯誤的程式碼 (已刪除)
+            
+        plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap", f"{desc}_temporal_attention_{args.target}.png")
+        try:
+            # 直接傳入 "list of arrays" 
+            plot_temporal_attention_heatmap(
+                all_alphas,  # <--- 傳入原始的 dict (包含 list)
+                plot_path, 
+                title=f"Average Temporal Attention ({desc})"
+            )
+            print(f"Saved attention heatmap to {plot_path}")
+        except Exception as e:
+            # 打印更詳細的錯誤
+            print(f"Failed to plot attention heatmap. Error: {e}")
+            import traceback
+            traceback.print_exc()
 
     return metrics, per_year
 
@@ -400,7 +514,7 @@ def main():
         model.load_state_dict(ckpt["state_dict"])
         print(f"Loaded best model from epoch {ckpt['epoch']} with val_mse={ckpt['val_mse']:.6f}")
 
-    val_metrics, val_detail = evaluate(model, val_loaders, device, args, desc="val(best)")
+    val_metrics, val_detail = evaluate(model, val_loaders, device, args, desc="val(best)", plot_attn=True)    
     if len(val_detail) > 0:
         plot_scatter_from_year_detail(
             val_detail,
@@ -413,7 +527,7 @@ def main():
     print(f"Saved test CSV to {val_csv_path}")
 
     # TEST once
-    test_metrics, test_detail = evaluate(model, test_loaders, device, args, desc="test")
+    test_metrics, test_detail = evaluate(model, test_loaders, device, args, desc="test", plot_attn=True)   
     print("Test:", test_metrics)
     if len(test_detail) > 0:
         plot_scatter_from_year_detail(

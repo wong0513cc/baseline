@@ -6,8 +6,8 @@ from torch.utils.data import Dataset
 import pandas as pd
 
 ROOT_PRICE="/home/sally/dataset/data_preprocessing/price_percentage"
-ROOT_FIN="/home/sally/dataset/data_preprocessing/financial"
-ROOT_NEWS="/home/sally/dataset/data_preprocessing/news/monthly_embeddings"
+ROOT_FIN="/home/sally/dataset/data_preprocessing/financial_new"
+ROOT_NEWS="/home/sally/dataset/data_preprocessing/news/bert/bert_monthly_embeddings"
 ROOT_EVENT="/home/sally/dataset/data_preprocessing/event_type_PCA"
 ROOT_GRAPH="/home/sally/dataset/gkg_data/monthly_graph_new"
 ROOT_LABEL="/home/sally/dataset/data_preprocessing/esg_label/esg_npy"
@@ -117,18 +117,11 @@ class GraphESGDataset(Dataset):
         symbols = self._load_year_symbols(year)
 
         # price / finance / news 皆已是 (12, N, dim)
-        price = np.load(os.path.join(self.root_price,   f"price_pct_{year}.npy"))      # (12, N, d_p)
-        news =  np.load(os.path.join(self.root_news,    f"news_{year}.npy"))
-        # Finance: load dict
-        finance_path = os.path.join(self.root_finance, f"financial_{year}.npy")
-        finance_dict = np.load(finance_path, allow_pickle=True).item()
-
-        finance = finance_dict["finance"]  # (12, N, d_f)
-        finance_mask = finance_dict["mask"]
-        finance_symbols = list(finance_dict["symbols"])
-
-        if symbols is not None and finance_symbols != symbols:
-            print(f"[警告] {year} finance symbols 與 year_symbol_list 不一致")
+        price = np.load(os.path.join(self.root_price, f"price_pct_{year}.npy"))      # (12, N, d_p)
+        news =  np.load(os.path.join(self.root_news, f"news_{year}_bert.npy"))
+        finance = np.load(os.path.join(self.root_finance, f"financial_{year}.npy"))
+        mask = np.load(os.path.join(self.root_finance, f"financial_mask_{year}.npy"))
+ 
 
         N_price = price.shape[1]
         N_fin   = finance.shape[1]
@@ -150,15 +143,13 @@ class GraphESGDataset(Dataset):
         sample = {
             "price":   torch.tensor(price, dtype=torch.float32),
             "finance": torch.tensor(finance, dtype=torch.float32),
-            "finance_mask": torch.tensor(finance_mask, dtype=torch.float32),
+            "finance_mask": torch.tensor(mask, dtype=torch.float32),
             "news":    torch.tensor(news, dtype=torch.float32),
             "event":   torch.tensor(event, dtype=torch.float32),
             "network": torch.tensor(network, dtype=torch.bool),
             "symbols": symbols if symbols is not None else None,
             "year": year
         }
-
-    
 
         if self.has_label and self.root_label is not None:
             label_path = os.path.join(self.root_label, f"{year}_esg.npy")
@@ -204,5 +195,3 @@ ds = GraphESGDataset(
                 fill_missing_event="zeros",
                 fill_missing_graph="zeros",
             )
-sample = ds[1]
-label = sample.get("label", None)
