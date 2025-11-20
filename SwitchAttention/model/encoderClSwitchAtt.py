@@ -203,7 +203,7 @@ class ESGMultiModalModel(nn.Module):
 
         # Encoders
         self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
-        self.enc_fin   = LSTMTimeEncoder(d_in=d_finance, hidden=hidden, num_layers=1,dropout=dropout)
+        self.enc_fin   = MLPTimeEncoder(d_in=d_finance, hidden=hidden, depth=2, dropout=dropout, K=12)
         self.enc_news  = TransformerTimeEncoder(d_in=d_news,  d_model=hidden, nhead=nhead_time, num_layers=news_layers,  dropout=dropout)
         self.enc_event = MLPTimeEncoder(d_in=d_event, hidden=hidden, depth=2, dropout=dropout, K=12)
 
