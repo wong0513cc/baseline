@@ -158,16 +158,6 @@ def train_one_epoch(model: nn.Module,
 
             scale_before = scaler.get_scale()
             scaler.scale(loss).backward()
-
-            # #### DBG 2：反傳「後」看梯度是否流動
-            # total_grad = 0.0
-            # cnt = 0
-            # for n,p in model.named_parameters():
-            #     if p.grad is not None:
-            #         total_grad += float(p.grad.detach().abs().mean().item())
-            #         cnt += 1
-            # print(f"[DBG#2] mean|grad| over params: {total_grad/max(1,cnt):.3e}")
-
             if args.grad_clip is not None and args.grad_clip > 0:
                 scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
@@ -254,10 +244,9 @@ def evaluate(model: nn.Module,
                     has_alphas = False
                     plot_attn = False
 
-            # 盡力從 raw 取 symbols（batch_size=1 時最準確）
+            # raw取symbols
             syms = raw.get("symbols", None)
             if syms is not None and len(symbols_y) == 0:
-                # 若 B>1，這裡不一定能拿到全部 symbols；先保守處理
                 if isinstance(syms, list):
                     symbols_y = syms
                 else:
@@ -267,13 +256,13 @@ def evaluate(model: nn.Module,
                         pass
 
         if len(preds_y_list) == 0:
-            continue
+            break
 
         preds_y = np.concatenate(preds_y_list)   # [~B*N]
         labels_y = np.concatenate(labels_y_list)  # [~B*N]
 
         se_y  = (labels_y - preds_y) ** 2
-        sse_y = float(se_y.sum())                # 加總（你要的）
+        sse_y = float(se_y.sum())    
         mse_y = float(se_y.mean()) 
 
         mae_y = float(np.abs(labels_y - preds_y).mean())
@@ -319,23 +308,16 @@ def evaluate(model: nn.Module,
         # print(f"[DBG3][{desc}] pred std={float(Yh.std()):.4f}  true std={float(Y.std()):.4f}")
 
     if plot_attn and has_alphas and len(all_alphas["price"]) > 0:
-        
-        # !! 我們不再 concatenate !!
-        # full_alphas = {}
-        # for key in all_alphas:
-        #    full_alphas[key] = np.concatenate(all_alphas[key], axis=0) # <--- 錯誤的程式碼 (已刪除)
-            
         plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap", f"{desc}_temporal_attention_{args.target}.png")
         try:
-            # 直接傳入 "list of arrays" 
+
             plot_temporal_attention_heatmap(
-                all_alphas,  # <--- 傳入原始的 dict (包含 list)
+                all_alphas, 
                 plot_path, 
                 title=f"Average Temporal Attention ({desc})"
             )
             print(f"Saved attention heatmap to {plot_path}")
         except Exception as e:
-            # 打印更詳細的錯誤
             print(f"Failed to plot attention heatmap. Error: {e}")
             import traceback
             traceback.print_exc()
@@ -551,7 +533,7 @@ def main():
         train_loaders=train_loaders,
         val_loaders=val_loaders,
         test_loaders=test_loaders,
-        out_dir="/home/sally/myWork/SwitchAttention",          # 你原本的輸出資料夾
+        out_dir="/home/sally/myWork/SwitchAttention",     
         split_names=("val","test"),
         target=args.target     # 要輸出的 split
     )

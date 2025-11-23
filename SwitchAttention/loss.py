@@ -22,151 +22,75 @@ def _pearson_corr(x: torch.Tensor, y: torch.Tensor, dim: int = -1, eps: float = 
 def l2_normalize(x, dim=-1, eps=1e-8):
     return x / (x.norm(p=2, dim=dim, keepdim=True).clamp(min=eps))
 
-# ---- Projector：每個模態接一個 2 層 MLP，再做 L2 normalize ----
-# class Projector(nn.Module):
-#     def __init__(self, in_dim, hid=64, out_dim=64):
-#         super().__init__()
-#         self.net = nn.Sequential(
-#             nn.Linear(in_dim, hid), nn.ReLU(inplace=True),
-#             nn.Linear(hid, out_dim)
-#         )
-#     def forward(self, x):  # x: [..., D]
-#         z = self.net(x)
-#         return F.normalize(z, dim=-1)
+def info_nce_two_modal(
+    ZA: torch.Tensor,   # [B,N,H]
+    ZB: torch.Tensor,   # [B,N,H]
+    tau: float = 0.07,
+    maskA: torch.Tensor = None,
+    maskB: torch.Tensor = None,
+) -> torch.Tensor:
+    B, N, H = ZA.shape
+    ZA = F.normalize(ZA, dim=-1)
+    ZB = F.normalize(ZB, dim=-1)
 
+    M = B * N
+    ZA_flat = ZA.reshape(M, H)
+    ZB_flat = ZB.reshape(M, H)
 
-class Projector(nn.Module):
-    """
-    H -> [hid] -> ReLU -> [out] -> LayerNorm -> L2 normalize
-    - 在投影後再做 L2；不要在 encoder 輸出處就先 normalize
-    - LayerNorm 幫助穩定 logits 的尺度，讓 tau 更好調
-    """
-    def __init__(self, in_dim, hid=256, out_dim=128, p_drop=0.0):
-        super().__init__()
-        self.fc1 = nn.Linear(in_dim, hid)
-        self.act = nn.ReLU(inplace=True)  # 也可試 SiLU
-        self.drop = nn.Dropout(p_drop) if p_drop > 0 else nn.Identity()
-        self.fc2 = nn.Linear(hid, out_dim)
-        self.ln  = nn.LayerNorm(out_dim, elementwise_affine=True)
+    if maskA is not None:
+        if maskA.dim() == 3:
+            maskA = maskA.squeeze(-1)
+        maskA = maskA.reshape(M) > 0
+    else:
+        maskA = torch.ones(M, dtype=torch.bool, device=ZA.device)
 
-        # 初始化更穩：fc2 輸出別太大
-        nn.init.kaiming_uniform_(self.fc1.weight, a=math.sqrt(5))
-        nn.init.zeros_(self.fc1.bias)
-        nn.init.xavier_uniform_(self.fc2.weight, gain=0.5)
-        nn.init.zeros_(self.fc2.bias)
+    if maskB is not None:
+        if maskB.dim() == 3:
+            maskB = maskB.squeeze(-1)
+        maskB = maskB.reshape(M) > 0
+    else:
+        maskB = torch.ones(M, dtype=torch.bool, device=ZA.device)
 
-    def forward(self, x):  # x: [..., D]
-        z = self.fc1(x)
-        z = self.act(z)
-        z = self.drop(z)
-        z = self.fc2(z)
-        z = self.ln(z)               # 先做 LayerNorm 穩定尺度
-        z = l2_normalize(z, dim=-1)  # 再做 L2 normalize（A1 的重點）
-        return z
+    valid = maskA & maskB
+    if valid.sum() <= 1:
+        return ZA.new_tensor(0.0)
 
-# ---- 兩模態的雙向 InfoNCE，單月版本：把公司維 N 當 batch ----
-def info_nce_two_modal_single_month(Zm, Zn, valid_mask=None, tau=0.07):
-    """
-    Zm, Zn: [N, d] (已 normalize)
-    valid_mask: [N] bool，可為 None。False 會把該公司排除在此月的對比外。
-    回傳：標量 loss
-    """
-    if valid_mask is not None:
-        Zm = Zm[valid_mask]
-        Zn = Zn[valid_mask]
+    ZA_flat = ZA_flat[valid]
+    ZB_flat = ZB_flat[valid]
+    M_valid = ZA_flat.size(0)
 
-    N = Zm.size(0)
-    if N <= 1:   # 只剩 0/1 家公司就跳過
-        return Zm.new_tensor(0.0)
+    logits = torch.matmul(ZA_flat, ZB_flat.t()) / tau  # [M_valid,M_valid]
+    labels = torch.arange(M_valid, device=ZA.device)
+    loss = F.cross_entropy(logits, labels)
+    return loss
 
-    logits = (Zm @ Zn.t()) / tau             # [N, N]
-    logits_t = logits.t()
-    target = torch.arange(N, device=Zm.device)
+def multimodal_info_loss_all_pairs(
+    Zp: torch.Tensor,   # [B,N,H]
+    Zf: torch.Tensor,   # [B,N,H]
+    Zn: torch.Tensor,   # [B,N,H]
+    Ze: torch.Tensor,   # [B,N,H]
+    tau: float = 0.07,
+    mask_price: torch.Tensor = None,
+    mask_fin: torch.Tensor = None,
+    mask_news: torch.Tensor = None,
+    mask_event: torch.Tensor = None,
+) -> torch.Tensor:
+    Zs   = [Zp, Zf, Zn, Ze]
+    Ms   = [mask_price, mask_fin, mask_news, mask_event]
 
-    # 數值穩定（選配，但建議做）
-    logits   = logits   - logits.max(dim=1, keepdim=True).values
-    logits_t = logits_t - logits_t.max(dim=1, keepdim=True).values
+    losses = []
+    num_modal = len(Zs)
 
-    loss_m2n = F.cross_entropy(logits,   target)
-    loss_n2m = F.cross_entropy(logits_t, target)
-    return 0.5 * (loss_m2n + loss_n2m)
+    for i in range(num_modal):
+        for j in range(i + 1, num_modal):
+            ZA, ZB = Zs[i], Zs[j]
+            if ZA is None or ZB is None:
+                continue
+            mA, mB = Ms[i], Ms[j]
+            loss_ij = info_nce_two_modal(ZA, ZB, tau=tau, maskA=mA, maskB=mB)
+            losses.append(loss_ij)
 
-# ---- 六個模態配對，逐月平均 ----
-def multimodal_icl_monthly(
-    H_dict,                    # {'price': [B,K,N,Dp], 'fin': [B,K,N,Df], 'news': [B,K,N,Dn], 'event': [B,K,N,De]}
-    projector_dict,            # {'price': Projector(Dp,...), ...}，各模態自己的投影頭
-    valid_mask_dict=None,      # （可選）{'price':[B,K,N] bool, ...}；若無，傳 None
-    tau=0.07
-):
-    """
-    回傳：標量 loss（先對月份平均，再對 batch 平均，再對六個配對平均）
-    假設 batch=1 也可正常運作。缺某模態時，從配對中自動跳過。
-    """
-    device = next(iter(projector_dict.values())).net[0].weight.device
-    keys = [k for k,v in H_dict.items() if v is not None]   # 只取有提供的模態
-    if len(keys) < 2:
-        return torch.tensor(0.0, device=device)
+    if not losses:
+        return Zp.new_tensor(0.0)
 
-    B, K = None, None
-    for k in keys:
-        assert H_dict[k].dim() == 4, f"{k} 期望 [B,K,N,D]"
-        B, K = H_dict[k].shape[:2]
-        break
-
-    # 收集所有模態配對（六個配對）
-    pairs = []
-    for i in range(len(keys)):
-        for j in range(i+1, len(keys)):
-            pairs.append((keys[i], keys[j]))
-    if not pairs:
-        return torch.tensor(0.0, device=device)
-
-    losses_per_pair = []
-
-    for m, n in pairs:
-        Hm = H_dict[m]  # [B,K,N,Dm]
-        Hn = H_dict[n]  # [B,K,N,Dn]
-        Pm = projector_dict[m]
-        Pn = projector_dict[n]
-
-        # 可選的有效公司 mask：需同時存在於兩模態才參與
-        Mmask = valid_mask_dict.get(m) if (valid_mask_dict is not None and m in valid_mask_dict) else None
-        Nmask = valid_mask_dict.get(n) if (valid_mask_dict is not None and n in valid_mask_dict) else None
-
-        # 對 batch 與月份逐一計算，再平均
-        loss_months = []
-        for b in range(B):
-            for t in range(K):
-                # 取出該月的 [N,D]
-                Hm_bt = Hm[b, t]  # [N, Dm]
-                Hn_bt = Hn[b, t]  # [N, Dn]
-
-                # 投影 + normalize
-                Zm_bt = Pm(Hm_bt)  # [N, d]
-                Zn_bt = Pn(Hn_bt)  # [N, d]
-
-                # 建立此月的有效公司 mask（若有）
-                vmask_bt = None
-                if Mmask is not None:
-                    vmask_bt = Mmask[b, t].to(torch.bool)
-
-                if Nmask is not None:
-                    if vmask_bt is not None:
-                        # 如果已有 Mmask，取交集
-                        vmask_bt = vmask_bt & Nmask[b, t].to(torch.bool) 
-                    else:
-                        # 否則，直接使用 Nmask
-                        vmask_bt = Nmask[b, t].to(torch.bool)
-
-                loss_bt = info_nce_two_modal_single_month(Zm_bt, Zn_bt, vmask_bt, tau)
-                loss_months.append(loss_bt)
-
-        if len(loss_months) > 0:
-            losses_per_pair.append(torch.stack(loss_months).mean())
-
-    if len(losses_per_pair) == 0:
-        return torch.tensor(0.0, device=device)
-
-    return torch.stack(losses_per_pair).mean()
-
-
+    return sum(losses) / len(losses)
