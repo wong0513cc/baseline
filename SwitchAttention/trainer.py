@@ -108,7 +108,7 @@ def move_inputs(batch: dict, device: torch.device, target: str):
     to = lambda t: (t.float().to(device) if isinstance(t, torch.Tensor) else t)
     price   = to(batch["price"]);   finance = to(batch["finance"])
     event   = to(batch["event"]);   news    = to(batch["news"])
-    adj = to (batch["network"])
+    adj = to (batch["network"]); company_id = to(batch["company_id"])
 
     if price.ndim == 3: price = price.unsqueeze(0)
     if finance.ndim == 3: finance = finance.unsqueeze(0)
@@ -116,7 +116,7 @@ def move_inputs(batch: dict, device: torch.device, target: str):
     if news.ndim == 3: news = news.unsqueeze(0)
     if adj.ndim ==3: adj = adj.unsqueeze(0)
 
-    bd = {"price":price, "finance":finance, "news":news, "event":event, "network": adj}
+    bd = {"price":price, "finance":finance, "news":news, "event":event, "network": adj, "company_id": company_id}
     if "label" in batch and batch["label"] is not None:
         lab = to(batch["label"])
         lab_company= select_labels_company_and_overall(lab, target)
@@ -408,10 +408,12 @@ def main():
         ic_weight=0.1, ic_type="pearson"
     ).to(device)
 
+
+
     def build_param_groups(model, lr=1e-3, wd=1e-4):
         decay, nodecay = [], []
         for n, p in model.named_parameters():
-            if not p.requires_grad:
+            if not p.requires_grad:  
                 continue
             n_lower = n.lower()
             if n_lower.endswith("bias") or "layernorm" in n_lower or ".ln" in n_lower:
@@ -430,6 +432,7 @@ def main():
         "train": {"loss_total": [], "mse": [], "ic_company": [], "cl": [],},
         "val": {"mse": [], "mae": [], "rmse": [], "smape": [], "ic_company": []},
     }
+
 
     best_val = float("inf")
     best_path = os.path.join(args.out_dir, f"best_esg_{args.target}.pth")
@@ -535,7 +538,7 @@ def main():
         test_loaders=test_loaders,
         out_dir="/home/sally/myWork/SwitchAttention",     
         split_names=("val","test"),
-        target=args.target     # 要輸出的 split
+        target=args.target  
     )
 
 

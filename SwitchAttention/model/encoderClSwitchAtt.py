@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Dict, Optional, Tuple
 from model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
-from loss import  _pearson_corr, info_nce_two_modal, multimodal_info_loss_all_pairs
+from loss import  _pearson_corr, info_nce_two_modal, multimodal_info_loss_all_pairs, _triplet_loss_batch_all, multimodal_triplet_loss_4modal
 from utils import SafeLayerNorm, PositionalEncoding, head
 
 import numpy as np
@@ -26,17 +26,12 @@ class LSTM(nn.Module):
         output = output.reshape(B, N, K, -1).permute(0, 2, 1, 3)
         return output
     
-# class TransformerEncoder
-
+# TransformerEncoder
 class TransformerTimeEncoder(nn.Module):
     def __init__(self, d_in: int, d_model: int, nhead: int = 4, num_layers: int = 2, dim_ff: int = 4, dropout: float = 0.1, use_posenc: bool = True):
         super().__init__()
         self.proj_in = nn.Linear(d_in, d_model)
-        enc_layer = nn.TransformerEncoderLayer(
-            d_model=d_model, nhead=nhead,
-            dim_feedforward=d_model * dim_ff, dropout=dropout,
-            batch_first=True, norm_first=True
-        )
+        enc_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=d_model * dim_ff, dropout=dropout, batch_first=True, norm_first=True)
         self.encoder = nn.TransformerEncoder(enc_layer, num_layers=num_layers)
         self.posenc = PositionalEncoding(d_model) if use_posenc else nn.Identity()
         self.norm = SafeLayerNorm(d_model)
@@ -80,53 +75,16 @@ class CrossAttention(nn.Module):
         self.value = nn.Linear(input_size, input_size)
         self.softmax = nn.Softmax(dim=-1)
 
-    def forward(self, presentation, qa_session):
-        q = self.query(qa_session)      # [B,Lq,H]
-        k = self.key(presentation)      # [B,Lp,H]
-        v = self.value(presentation)    # [B,Lp,H]
+    def forward(self, q, k, v):
+        q = self.query(q)
+        k = self.key(k)
+        v = self.value(v)
         
-        attn_weights = torch.matmul(q, k.transpose(1, 2))  # [B,Lq,Lp]
+        attn_weights = torch.matmul(q, k.transpose(1, 2))
         attn_weights = self.softmax(attn_weights)
-        output = torch.matmul(attn_weights, v)             # [B,Lq,H]
+        output = torch.matmul(attn_weights, v)
+        
         return output
-    
-class CrossModalFusion(nn.Module):
-    def __init__(self, hidden: int):
-        super().__init__()
-        self.ca_price = CrossAttention(hidden)
-        self.ca_fin   = CrossAttention(hidden)
-        self.ca_news  = CrossAttention(hidden)
-        self.ca_event = CrossAttention(hidden)
-
-    def forward(self, Hp, Hf, Hn, He):
-        B, K, N, H = Hp.shape
-
-        # [B,K,N,4,H]
-        M = torch.stack([Hp, Hf, Hn, He], dim=3)   #  index
-        # 把 (B,K,N) 合併成 batch，modal 當 seq_len: [B*K*N, 4, H]
-        M_flat = M.reshape(B * K * N, 4, H)
-
-        def fuse_one(ca_module, idx_self):
-            """
-            對某一個模態 m:
-              - self 嵌入: M_flat[:, idx_self, :]        -> query (Lq=1)
-              - 其他模態: M_flat[:, idx_others, :]       -> presentation (Lp=3)
-            """
-            idx_others = [i for i in range(4) if i != idx_self]
-
-            qa  = M_flat[:, idx_self:idx_self+1, :]   # [B', 1, H]
-            prs = M_flat[:, idx_others, :]            # [B', 3, H]
-
-            out = ca_module(presentation=prs, qa_session=qa)  # [B', 1, H]
-            out = out.squeeze(1)                              # [B', H]
-            return out.reshape(B, K, N, H)                    # [B,K,N,H]
-
-        Hp_f = fuse_one(self.ca_price, 0)   # price ← {fin, news, event}
-        Hf_f = fuse_one(self.ca_fin,   1)   # fin   ← {price, news, event}
-        Hn_f = fuse_one(self.ca_news,  2)   # news  ← {price, fin, event}
-        He_f = fuse_one(self.ca_event, 3)   # event ← {price, fin, news}
-
-        return Hp_f, Hf_f, Hn_f, He_f
 
     
 # Additive Attention
@@ -189,7 +147,86 @@ class TemporalSelfAttention(nn.Module):
         out, _ = self.attn(x, x, x, attn_mask=attn_mask, need_weights=False) #[B*N, K, H]
         out = out.reshape(B, N, K, H).permute(0, 2, 1, 3) #[b,k,n,h]
         return out, None
+    
 
+class SwitchLayer(nn.Module):
+    """
+    一層 switch-attention：
+    - 只更新一個模態 (q_mod)
+    - Q 來自 q_mod，K/V 來自其他模態
+    - 用共享 CrossAttention（共用 QKV 權重）
+    """
+    def __init__(self, hidden: int, q_mod: str, k_mod: str, v_mod: str,
+                 ca: CrossAttention, dropout: float = 0.1, residual_scale: float = 0.5):
+        super().__init__()
+        self.ca = ca                     # 共用的一個 CrossAttention
+        self.q_mod = q_mod               # 'p', 'f', 'n', 'e'
+        self.k_mod = k_mod
+        self.v_mod = v_mod
+        self.s = residual_scale
+
+        self.ln1 = nn.LayerNorm(hidden)
+        self.ff  = nn.Sequential(
+            nn.Linear(hidden, 4 * hidden),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(4 * hidden, hidden),
+        )
+        self.ln2 = nn.LayerNorm(hidden)
+
+    def forward(self, Zp, Zf, Zn, Ze):
+        # 取出目前四個模態的表示
+        d = {'p': Zp, 'f': Zf, 'n': Zn, 'e': Ze}
+        q = d[self.q_mod]   # [B,N,H]
+        k = d[self.k_mod]   # [B,N,H]
+        v = d[self.v_mod]   # [B,N,H]
+
+        # Cross-attn 更新 q 這個模態
+        delta = self.ca(q, k, v)         # [B,N,H]
+        q_new = self.ln1(q + self.s * delta)
+
+        # FFN
+        ff_out = self.ff(q_new)
+        q_new = self.ln2(q_new + ff_out)
+
+        # 寫回對應的那個模態
+        if self.q_mod == 'p':
+            Zp = q_new
+        elif self.q_mod == 'f':
+            Zf = q_new
+        elif self.q_mod == 'n':
+            Zn = q_new
+        elif self.q_mod == 'e':
+            Ze = q_new
+
+        return Zp, Zf, Zn, Ze
+
+class SwitchAttention(nn.Module):
+    """
+    更貼近論文的 Switch-Attention：
+    - 內含 4 個 SwitchLayer
+    - 每層只更新一個模態，Q/K/V 來源依序為：
+        1) Q=P, K=F, V=N
+        2) Q=F, K=N, V=E
+        3) Q=N, K=E, V=P
+        4) Q=E, K=P, V=F
+    - 四層都共用同一個 CrossAttention，所以 Q/K/V projection 在所有模態 & 層共享
+    """
+    def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.5):
+        super().__init__()
+        ca = CrossAttention(hidden)   # 一個共享的 QKV
+
+        self.layers = nn.ModuleList([
+            SwitchLayer(hidden, 'p', 'f', 'n', ca, dropout, residual_scale),
+            SwitchLayer(hidden, 'f', 'n', 'e', ca, dropout, residual_scale),
+            SwitchLayer(hidden, 'n', 'e', 'p', ca, dropout, residual_scale),
+            SwitchLayer(hidden, 'e', 'p', 'f', ca, dropout, residual_scale),
+        ])
+
+    def forward(self, Zp, Zf, Zn, Ze):
+        for layer in self.layers:
+            Zp, Zf, Zn, Ze = layer(Zp, Zf, Zn, Ze)
+        return Zp, Zf, Zn, Ze
 
 
 # Main model
@@ -210,6 +247,7 @@ class ESGMultiModalModel(nn.Module):
                  ic_type: str = "pearson",
                  cl_weight: float = 0.0,   
                  cl_tau: float = 0.07,
+                 freeze_enc: bool = True
                  ):
         super().__init__()
         self.ic_weight = ic_weight
@@ -218,12 +256,16 @@ class ESGMultiModalModel(nn.Module):
         self.cl_tau = cl_tau
 
         # Encoders
-        # self.enc_price = LSTM(input_size=d_price, hidden_size=hidden, num_layers=1)
-        # self.enc_fin = LSTM(input_size=d_finance, hidden_size=hidden, num_layers=1)
         self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
         self.enc_fin   = MLPTimeEncoder(d_in=d_finance, hidden=hidden, depth=2, dropout=dropout, K=12)
         self.enc_news  = TransformerTimeEncoder(d_in=d_news, d_model=hidden, nhead=nhead_time, num_layers=news_layers, dropout=dropout)
         self.enc_event = MLPTimeEncoder(d_in=d_event, hidden=hidden, depth=2, dropout=dropout, K=12)
+
+        # multihead attention
+        self.self_attn_price = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_fin = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_news = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_event = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
 
         # Attention
         # additive attention
@@ -232,19 +274,13 @@ class ESGMultiModalModel(nn.Module):
         self.news_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
         self.event_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
 
-        # cross attention
-        self.cross_modal = CrossModalFusion(hidden=hidden)
+        # fusion
+        self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.5)
 
-        # multihead attention
-        self.self_attn_price = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_fin = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_news = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_event = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-
-        d_fused = hidden*4
+        d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
-        # self.predictor = nn.Sequential(nn.LayerNorm(d_fused), nn.Linear(d_fused, d_fused), nn.GELU(), nn.Dropout(dropout), nn.Linear(d_fused, 1),)
         self.ln = nn.LayerNorm(hidden)
+
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
@@ -257,30 +293,31 @@ class ESGMultiModalModel(nn.Module):
         Hn = self.enc_news(news)
         He = self.enc_event(event)
 
-        # fm = batch.get("finance_mask", None)
-        # if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1]
-        
+        fm = batch.get("finance_mask", None)
+        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1
+
         # mha
         Hp_sa, _ = self.self_attn_price(Hp)
         Hf_sa, _ = self.self_attn_fin(Hf)
         Hn_sa, _ = self.self_attn_news(Hn)
         He_sa, _ = self.self_attn_event(He)
 
-        # cross modal fusion
-        Hp_cm, Hf_cm, Hn_cm, He_cm = self.cross_modal(Hp_sa, Hf_sa, Hn_sa, He_sa)
-
         # additive attn
-        Zp, alpha_p = self.price_additive_attn(Hp_cm)
-        Zf, alpha_f = self.fin_additive_attn(Hf_cm)
-        Zn, alpha_n = self.news_additive_attn(Hn_cm)
-        Ze, alpha_e = self.event_additive_attn(He_cm)
-        
-        # prediction layer
+        Zp, alpha_p = self.price_additive_attn(Hp_sa)
+        Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask = fm)
+        Zn, alpha_n = self.news_additive_attn(Hn_sa)
+        Ze, alpha_e = self.event_additive_attn(He_sa)
 
+        # cross modal fusion
+        Zp, Zf, Zn, Ze = self.switch_attn(Zp, Zf, Zn, Ze)
+
+        # prediction layer
         # [B,N,H] * 4 -> [B,N, 4*H]
+
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
-        # Z = torch.cat([Hp_sa[:, -1],Hf_sa[:, -1], Hn_sa[:, -1], He_sa[:, -1]], dim=-1)
-        # # Z = torch.cat([Hp_sa.mean(dim=1), Hf_sa.mean(dim=1), Hn_sa.mean(dim=1), He_sa.mean(dim=1)],dim=-1)
+        # Z = torch.cat([Hp_aligned[:, -1],Hf_aligned[:, -1], Hn_aligned[:, -1], He_aligned[:, -1]], dim=-1)
+        # Z = torch.cat([Hp_aligned.mean(dim=1), Hf_aligned.mean(dim=1), Hn_aligned.mean(dim=1), He_aligned.mean(dim=1)],dim=-1)
+
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
         out = {
@@ -323,10 +360,22 @@ class ESGMultiModalModel(nn.Module):
                 # )
 
             # total loss：MSE + IC + CL
+            if self.cl_weight > 0.0:
+                # Zp, Zf, Zn, Ze: [B,N,H]
+                embeds = {
+                    "price": Zp,
+                    "fin":   Zf,
+                    "news":  Zn,
+                    "event": Ze,
+                }
+
+                # 確保 batch 裡有 company_id: [B,N]，例如來自 yearly symbol 的 idx
+                company_id = batch["company_id"]       # [B,N] int
+
             total = (
                 mse_company
                 + self.ic_weight * ((1.0 - ic_company) / 2.0)
-                + self.cl_weight * cl_loss
+                + self.cl_weight * cl_loss 
             )
 
             out["losses"] = {

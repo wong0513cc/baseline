@@ -11,7 +11,7 @@ ROOT_NEWS="/home/sally/dataset/data_preprocessing/news/bert/bert_monthly_embeddi
 ROOT_EVENT="/home/sally/dataset/data_preprocessing/event_type_PCA"
 ROOT_GRAPH="/home/sally/dataset/gkg_data/monthly_graph_new"
 ROOT_LABEL="/home/sally/dataset/data_preprocessing/esg_label/esg_npy"
-ROOT_SYMS="/home/sally/dataset/ticker/nyse/yearly_symbol"
+ROOT_SYMS="/home/sally/dataset/ticker/nyse/yearly_symbol_id"
 
 class GraphESGDataset(Dataset):
     """
@@ -71,9 +71,13 @@ class GraphESGDataset(Dataset):
     def _load_year_symbols(self, year):
         if self.root_year_symbols is None:
             return None
-        path = os.path.join(self.root_year_symbols, f"{year}_symbol.csv")
-        syms = pd.read_csv(path)["symbol"].astype(str).tolist()
-        return syms
+
+        path = os.path.join(self.root_year_symbols, f"{year}_symbol_id_industry.csv")
+        df = pd.read_csv(path)
+        
+        syms = df["symbol"].astype(str).tolist()
+        idx = df["idx"].astype(int).tolist()  
+        return syms, idx
 
     def _stack_event(self, year, N):
         months = [f"{m:02d}" for m in range(1, 13)]
@@ -114,7 +118,7 @@ class GraphESGDataset(Dataset):
 
     def _load_one_year(self, year):
         # 讀當年的 symbol list（用來確認 N 與除錯）
-        symbols = self._load_year_symbols(year)
+        symbols, idx_list = self._load_year_symbols(year)
 
         # price / finance / news 皆已是 (12, N, dim)
         price = np.load(os.path.join(self.root_price, f"price_pct_{year}.npy"))      # (12, N, d_p)
@@ -148,6 +152,7 @@ class GraphESGDataset(Dataset):
             "event":   torch.tensor(event, dtype=torch.float32),
             "network": torch.tensor(network, dtype=torch.bool),
             "symbols": symbols if symbols is not None else None,
+            "company_id": np.array(idx_list),
             "year": year
         }
 
@@ -177,6 +182,7 @@ class GraphESGDataset(Dataset):
 
     def __getitem__(self, idx):
         sample = self.samples[idx]
+        sample["company_id"] = torch.as_tensor(sample["company_id"], dtype=torch.long)
         sample["year"] = torch.tensor(self.years[idx], dtype=torch.int32)
         return sample
 years = range(2015,2025)
