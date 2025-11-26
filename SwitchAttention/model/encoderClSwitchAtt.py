@@ -406,7 +406,7 @@ class ESGMultiModalModel(nn.Module):
 
         # additive attn
         Zp, alpha_p = self.price_additive_attn(Hp_sa)
-        Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask = fm)
+        Zf, alpha_f = self.fin_additive_attn(Hf_sa)
         Zn, alpha_n = self.news_additive_attn(Hn_sa)
         Ze, alpha_e = self.event_additive_attn(He_sa)
 
