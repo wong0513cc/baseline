@@ -11,6 +11,61 @@ from utils import SafeLayerNorm, PositionalEncoding, head
 import numpy as np
 import matplotlib.pyplot as plt
 
+def _masked_softmax(scores, mask, dim):
+    if mask is not None:
+        if mask.dtype != torch.bool:
+            mask = mask != 0
+        scores = scores.masked_fill(~mask, float('-inf'))
+    out = F.softmax(scores, dim=dim)
+    return torch.nan_to_num(out, nan=0.0)
+
+class GraphMessagePassing(nn.Module):
+    """
+    論文版：每個 timestep 做一次 attention-based message passing，
+    參數在所有模態之間共用。
+
+    單次呼叫：
+      x:   [B, N, D]
+      adj: [B, N, N]
+      ->   out: [B, N, D]
+    """
+    def __init__(self, hidden_dim: int, dropout: float = 0.1):
+        super().__init__()
+        self.q = nn.Linear(hidden_dim, hidden_dim)
+        self.k = nn.Linear(hidden_dim, hidden_dim)
+        self.v = nn.Linear(hidden_dim, hidden_dim)
+        self.W_att = nn.Parameter(torch.empty(hidden_dim, hidden_dim))
+        self.drop = nn.Dropout(dropout)
+        self.ln = nn.LayerNorm(hidden_dim)
+        nn.init.xavier_uniform_(self.W_att)
+
+    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        """
+        x:   [B, N, D]
+        adj: [B, N, N]
+        """
+        B, N, D = x.shape
+
+        # 確保每個節點至少有 self-loop（避免整行都是 0）
+        deg = adj.sum(-1, keepdim=True)  # [B,N,1]
+        I = torch.eye(N, device=adj.device, dtype=adj.dtype).unsqueeze(0)  # [1,N,N]
+        adj = torch.where(deg > 0, adj, I)
+
+        Q = self.q(x)  # [B,N,D]
+        K = self.k(x)  # [B,N,D]
+        V = self.v(x)  # [B,N,D]
+
+        # 注意：這裡是 (Q W_att) K^T
+        scores = (Q @ self.W_att) @ K.transpose(-1, -2)  # [B,N,N]
+        scores = scores / math.sqrt(D)
+
+        # 在 adj==1 的地方做 masked softmax
+        attn = _masked_softmax(scores, adj, dim=-1)      # [B,N,N]
+
+        out = attn @ V                                   # [B,N,D]
+        out = self.ln(x + self.drop(out))                # residual + LN
+        return out
+
 # Encoders
 class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, bidirectional=False):
@@ -228,6 +283,27 @@ class SwitchAttention(nn.Module):
             Zp, Zf, Zn, Ze = layer(Zp, Zf, Zn, Ze)
         return Zp, Zf, Zn, Ze
 
+class ModalAttentionFusion(nn.Module):
+    def __init__(self, hidden: int, dropout: float = 0.1):
+        super().__init__()
+        self.proj = nn.Linear(hidden, hidden)
+        self.v = nn.Linear(hidden, 1) 
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, Zp, Zf, Zn, Ze):
+        # [B,N,H] → [B,N,4,H]
+        Z = torch.stack([Zp, Zf, Zn, Ze], dim=2)  # [B,N,4,H]
+
+        H_tilde = torch.tanh(Z)        # [B,N,4,H]
+        scores = self.v(H_tilde).squeeze(-1)      # [B,N,4]
+        alpha = torch.softmax(scores, dim=-1)     # [B,N,4]
+
+        alpha_expanded = alpha.unsqueeze(-1)      # [B,N,4,1]
+        Z_weighted = Z * alpha_expanded           # [B,N,4,H]
+        Z_fused = Z_weighted.sum(dim=2)           # [B,N,H]
+
+        Z_fused = self.dropout(Z_fused)
+        return Z_fused, alpha
 
 # Main model
 class ESGMultiModalModel(nn.Module):
@@ -261,6 +337,9 @@ class ESGMultiModalModel(nn.Module):
         self.enc_news  = TransformerTimeEncoder(d_in=d_news, d_model=hidden, nhead=nhead_time, num_layers=news_layers, dropout=dropout)
         self.enc_event = MLPTimeEncoder(d_in=d_event, hidden=hidden, depth=2, dropout=dropout, K=12)
 
+        # graph
+        # self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=dropout)
+
         # multihead attention
         self.self_attn_price = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
         self.self_attn_fin = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
@@ -276,10 +355,27 @@ class ESGMultiModalModel(nn.Module):
 
         # fusion
         self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.5)
-
+        # self.modal_fusion = ModalAttentionFusion(hidden, dropout=dropout)
         d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
         self.ln = nn.LayerNorm(hidden)
+
+    # 動態圖沒用 可憐    
+    def _apply_grmp_over_time(self, H: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+        """
+        H:   [B,K,N,H]
+        adj: [B,K,N,N]
+        對每個 timestep k 做一次 GraphMessagePassing：
+            h_k = GRMP(H[:,k], adj[:,k])
+        回傳同樣 shape: [B,K,N,H]
+        """
+        B, K, N, D = H.shape
+        h_steps = []
+        for k in range(K):
+            h_k = self.grmp(H[:, k], adj[:, k])  # [B,N,H]
+            h_steps.append(h_k)
+        H_out = torch.stack(h_steps, dim=1)      # [B,K,N,H]
+        return H_out
 
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -292,6 +388,12 @@ class ESGMultiModalModel(nn.Module):
         Hf = self.enc_fin(finance)
         Hn = self.enc_news(news)
         He = self.enc_event(event)
+                
+        # Hp = self._apply_grmp_over_time(Hp, adj)   # [B,K,N,H]
+        # Hf = self._apply_grmp_over_time(Hf, adj)
+        # Hn = self._apply_grmp_over_time(Hn, adj)
+        # He = self._apply_grmp_over_time(He, adj)
+
 
         fm = batch.get("finance_mask", None)
         if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1
@@ -317,6 +419,7 @@ class ESGMultiModalModel(nn.Module):
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
         # Z = torch.cat([Hp_aligned[:, -1],Hf_aligned[:, -1], Hn_aligned[:, -1], He_aligned[:, -1]], dim=-1)
         # Z = torch.cat([Hp_aligned.mean(dim=1), Hf_aligned.mean(dim=1), Hn_aligned.mean(dim=1), He_aligned.mean(dim=1)],dim=-1)
+        # Z_fused, alpha_modal = self.modal_fusion(Zp, Zf, Zn, Ze)
 
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
