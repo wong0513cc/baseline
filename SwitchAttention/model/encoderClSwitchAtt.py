@@ -99,7 +99,7 @@ class TemporalAttentionAggregator(nn.Module): # performance更好
     
 # MHA    
 class MHA(nn.Module):
-    def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = True):
+    def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = False):
         super().__init__()
         self.attn = nn.MultiheadAttention(
             embed_dim=hidden,
@@ -229,10 +229,10 @@ class ESGMultiModalModel(nn.Module):
         # self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=dropout)
 
         # multihead attention
-        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
 
         # Attention
         # additive attention
