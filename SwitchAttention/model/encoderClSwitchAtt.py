@@ -4,83 +4,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Dict, Optional, Tuple
-from model.switchAttention import SwitchMultiModalBlock, PreNorm, MLP, SwitchEncoder
 from loss import  _pearson_corr, info_nce_two_modal, multimodal_info_loss_all_pairs, _triplet_loss_batch_all, multimodal_triplet_loss_4modal
 from utils import SafeLayerNorm, PositionalEncoding, head
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-def _masked_softmax(scores, mask, dim):
-    if mask is not None:
-        if mask.dtype != torch.bool:
-            mask = mask != 0
-        scores = scores.masked_fill(~mask, float('-inf'))
-    out = F.softmax(scores, dim=dim)
-    return torch.nan_to_num(out, nan=0.0)
-
-class GraphMessagePassing(nn.Module):
-    """
-    論文版：每個 timestep 做一次 attention-based message passing，
-    參數在所有模態之間共用。
-
-    單次呼叫：
-      x:   [B, N, D]
-      adj: [B, N, N]
-      ->   out: [B, N, D]
-    """
-    def __init__(self, hidden_dim: int, dropout: float = 0.1):
-        super().__init__()
-        self.q = nn.Linear(hidden_dim, hidden_dim)
-        self.k = nn.Linear(hidden_dim, hidden_dim)
-        self.v = nn.Linear(hidden_dim, hidden_dim)
-        self.W_att = nn.Parameter(torch.empty(hidden_dim, hidden_dim))
-        self.drop = nn.Dropout(dropout)
-        self.ln = nn.LayerNorm(hidden_dim)
-        nn.init.xavier_uniform_(self.W_att)
-
-    def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        x:   [B, N, D]
-        adj: [B, N, N]
-        """
-        B, N, D = x.shape
-
-        # 確保每個節點至少有 self-loop（避免整行都是 0）
-        deg = adj.sum(-1, keepdim=True)  # [B,N,1]
-        I = torch.eye(N, device=adj.device, dtype=adj.dtype).unsqueeze(0)  # [1,N,N]
-        adj = torch.where(deg > 0, adj, I)
-
-        Q = self.q(x)  # [B,N,D]
-        K = self.k(x)  # [B,N,D]
-        V = self.v(x)  # [B,N,D]
-
-        # 注意：這裡是 (Q W_att) K^T
-        scores = (Q @ self.W_att) @ K.transpose(-1, -2)  # [B,N,N]
-        scores = scores / math.sqrt(D)
-
-        # 在 adj==1 的地方做 masked softmax
-        attn = _masked_softmax(scores, adj, dim=-1)      # [B,N,N]
-
-        out = attn @ V                                   # [B,N,D]
-        out = self.ln(x + self.drop(out))                # residual + LN
-        return out
-
 # Encoders
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bidirectional=False):
-        super(LSTM, self).__init__()
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, 
-                            bidirectional=bidirectional, batch_first=True)
 
-    def forward(self, x):
-        B, K, N, F = x.shape
-        x =x.permute(0,2,1,3).reshape(B*N, K, F)
-        self.lstm.flatten_parameters()
-        output, _ = self.lstm(x)
-        output = output.reshape(B, N, K, -1).permute(0, 2, 1, 3)
-        return output
-    
 # TransformerEncoder
 class TransformerTimeEncoder(nn.Module):
     def __init__(self, d_in: int, d_model: int, nhead: int = 4, num_layers: int = 2, dim_ff: int = 4, dropout: float = 0.1, use_posenc: bool = True):
@@ -141,7 +71,6 @@ class CrossAttention(nn.Module):
         
         return output
 
-    
 # Additive Attention
 class TemporalAttentionAggregator(nn.Module): # performance更好
     def __init__(self, hidden: int, attn_hidden: int = 128, dropout: float = 0.1):
@@ -157,21 +86,19 @@ class TemporalAttentionAggregator(nn.Module): # performance更好
     def forward(self, Z_time: torch.Tensor, mask: torch.Tensor = None):
         # Z_time: [B,K,N,H]
         scores = self.scorer(Z_time) #(B,K,N,1)
-    
         if mask is not None:
             scores = scores.masked_fill(mask <= 0, float('-inf'))
-            
         alpha_time = F.softmax(scores, dim=1) # [B,K,N,1]
 
         # (B,K,N,1) * (B,K,N,H) -> (B,K,N,H)
         Z_year = torch.sum(alpha_time * Z_time, dim=1) # sum over dim=1 (K) -> (B,N,H)
-    
+
         # alpha_time [B,K,N,1] -> [B,N,K]
         alpha_to_viz = alpha_time.squeeze(-1).permute(0, 2, 1)
         return Z_year, alpha_to_viz
     
 # MHA    
-class TemporalSelfAttention(nn.Module):
+class MHA(nn.Module):
     def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = True):
         super().__init__()
         self.attn = nn.MultiheadAttention(
@@ -205,12 +132,6 @@ class TemporalSelfAttention(nn.Module):
     
 
 class SwitchLayer(nn.Module):
-    """
-    一層 switch-attention：
-    - 只更新一個模態 (q_mod)
-    - Q 來自 q_mod，K/V 來自其他模態
-    - 用共享 CrossAttention（共用 QKV 權重）
-    """
     def __init__(self, hidden: int, q_mod: str, k_mod: str, v_mod: str,
                  ca: CrossAttention, dropout: float = 0.1, residual_scale: float = 0.5):
         super().__init__()
@@ -244,7 +165,6 @@ class SwitchLayer(nn.Module):
         ff_out = self.ff(q_new)
         q_new = self.ln2(q_new + ff_out)
 
-        # 寫回對應的那個模態
         if self.q_mod == 'p':
             Zp = q_new
         elif self.q_mod == 'f':
@@ -257,19 +177,9 @@ class SwitchLayer(nn.Module):
         return Zp, Zf, Zn, Ze
 
 class SwitchAttention(nn.Module):
-    """
-    更貼近論文的 Switch-Attention：
-    - 內含 4 個 SwitchLayer
-    - 每層只更新一個模態，Q/K/V 來源依序為：
-        1) Q=P, K=F, V=N
-        2) Q=F, K=N, V=E
-        3) Q=N, K=E, V=P
-        4) Q=E, K=P, V=F
-    - 四層都共用同一個 CrossAttention，所以 Q/K/V projection 在所有模態 & 層共享
-    """
     def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.5):
         super().__init__()
-        ca = CrossAttention(hidden)   # 一個共享的 QKV
+        ca = CrossAttention(hidden)   # 共享的 QKV
 
         self.layers = nn.ModuleList([
             SwitchLayer(hidden, 'p', 'f', 'n', ca, dropout, residual_scale),
@@ -282,28 +192,6 @@ class SwitchAttention(nn.Module):
         for layer in self.layers:
             Zp, Zf, Zn, Ze = layer(Zp, Zf, Zn, Ze)
         return Zp, Zf, Zn, Ze
-
-class ModalAttentionFusion(nn.Module):
-    def __init__(self, hidden: int, dropout: float = 0.1):
-        super().__init__()
-        self.proj = nn.Linear(hidden, hidden)
-        self.v = nn.Linear(hidden, 1) 
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, Zp, Zf, Zn, Ze):
-        # [B,N,H] → [B,N,4,H]
-        Z = torch.stack([Zp, Zf, Zn, Ze], dim=2)  # [B,N,4,H]
-
-        H_tilde = torch.tanh(Z)        # [B,N,4,H]
-        scores = self.v(H_tilde).squeeze(-1)      # [B,N,4]
-        alpha = torch.softmax(scores, dim=-1)     # [B,N,4]
-
-        alpha_expanded = alpha.unsqueeze(-1)      # [B,N,4,1]
-        Z_weighted = Z * alpha_expanded           # [B,N,4,H]
-        Z_fused = Z_weighted.sum(dim=2)           # [B,N,H]
-
-        Z_fused = self.dropout(Z_fused)
-        return Z_fused, alpha
 
 # Main model
 class ESGMultiModalModel(nn.Module):
@@ -341,10 +229,10 @@ class ESGMultiModalModel(nn.Module):
         # self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=dropout)
 
         # multihead attention
-        self.self_attn_price = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_fin = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_news = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_event = TemporalSelfAttention(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
 
         # Attention
         # additive attention
@@ -355,32 +243,13 @@ class ESGMultiModalModel(nn.Module):
 
         # fusion
         self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.5)
-        # self.modal_fusion = ModalAttentionFusion(hidden, dropout=dropout)
         d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
         self.ln = nn.LayerNorm(hidden)
 
-    # 動態圖沒用 可憐    
-    def _apply_grmp_over_time(self, H: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
-        """
-        H:   [B,K,N,H]
-        adj: [B,K,N,N]
-        對每個 timestep k 做一次 GraphMessagePassing：
-            h_k = GRMP(H[:,k], adj[:,k])
-        回傳同樣 shape: [B,K,N,H]
-        """
-        B, K, N, D = H.shape
-        h_steps = []
-        for k in range(K):
-            h_k = self.grmp(H[:, k], adj[:, k])  # [B,N,H]
-            h_steps.append(h_k)
-        H_out = torch.stack(h_steps, dim=1)      # [B,K,N,H]
-        return H_out
-
 
     def forward(self, batch: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]
-        adj = batch["network"]                           # [B,K,N,N] bool/0-1
+        price, finance, news, event = batch["price"], batch["finance"], batch["news"], batch["event"]                
         label_company = batch.get("label_company", None) # [B,1,N,1]
 
         # encoders [B,K,N,H]
@@ -388,15 +257,9 @@ class ESGMultiModalModel(nn.Module):
         Hf = self.enc_fin(finance)
         Hn = self.enc_news(news)
         He = self.enc_event(event)
-                
-        # Hp = self._apply_grmp_over_time(Hp, adj)   # [B,K,N,H]
-        # Hf = self._apply_grmp_over_time(Hf, adj)
-        # Hn = self._apply_grmp_over_time(Hn, adj)
-        # He = self._apply_grmp_over_time(He, adj)
-
 
         fm = batch.get("finance_mask", None)
-        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0) # 應對 [K,N,1] -> [B,K,N,1
+        if fm is not None and fm.dim()==3: fm = fm.unsqueeze(0)
 
         # mha
         Hp_sa, _ = self.self_attn_price(Hp)
@@ -406,7 +269,7 @@ class ESGMultiModalModel(nn.Module):
 
         # additive attn
         Zp, alpha_p = self.price_additive_attn(Hp_sa)
-        Zf, alpha_f = self.fin_additive_attn(Hf_sa)
+        Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask=fm)
         Zn, alpha_n = self.news_additive_attn(Hn_sa)
         Ze, alpha_e = self.event_additive_attn(He_sa)
 
@@ -419,7 +282,6 @@ class ESGMultiModalModel(nn.Module):
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
         # Z = torch.cat([Hp_aligned[:, -1],Hf_aligned[:, -1], Hn_aligned[:, -1], He_aligned[:, -1]], dim=-1)
         # Z = torch.cat([Hp_aligned.mean(dim=1), Hf_aligned.mean(dim=1), Hn_aligned.mean(dim=1), He_aligned.mean(dim=1)],dim=-1)
-        # Z_fused, alpha_modal = self.modal_fusion(Zp, Zf, Zn, Ze)
 
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
@@ -471,9 +333,6 @@ class ESGMultiModalModel(nn.Module):
                     "news":  Zn,
                     "event": Ze,
                 }
-
-                # 確保 batch 裡有 company_id: [B,N]，例如來自 yearly symbol 的 idx
-                company_id = batch["company_id"]       # [B,N] int
 
             total = (
                 mse_company
