@@ -92,7 +92,6 @@ def plot_temporal_attention_heatmap(alphas_dict: Dict[str, List[np.ndarray]], ou
     ax.set_ylabel("Modality")
     ax.set_title(title)
     
-    # 在格子裡顯示數字
     for i in range(len(modalities)):
         for j in range(K):
             text = ax.text(j, i, f"{heatmap_data[i, j]:.2f}",
@@ -335,7 +334,7 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=1e-4)
     ap.add_argument("--grad_clip", type=float, default=1.0)
     ap.add_argument("--amp", action="store_true", default=False)
-    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--seed", type=int, default=6)
     ap.add_argument("--device", type=str, default="cuda:1")
     ap.add_argument("--logdir", type=str, default="runs")
     ap.add_argument("--out_dir", type=str, default="./outputs")
