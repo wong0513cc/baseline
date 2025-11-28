@@ -5,6 +5,7 @@ import argparse
 import random
 from typing import Dict, Tuple, List
 import numpy as np
+from datetime import datetime
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -508,7 +509,7 @@ def main():
 
     val_csv_path = os.path.join(args.out_dir, f"val_results_{args.target}.csv")
     _ = save_test_csv(val_detail, val_csv_path)
-    print(f"Saved test CSV to {val_csv_path}")
+    # print(f"Saved test CSV to {val_csv_path}")
 
     # TEST once
     test_metrics, test_detail = evaluate(model, test_loaders, device, args, desc="test", plot_attn=True)   
@@ -522,9 +523,10 @@ def main():
 
     csv_path = os.path.join(args.out_dir, f"test_results_{args.target}.csv")
     _ = save_test_csv(test_detail, csv_path)
-    print(f"Saved test CSV to {csv_path}")
+    # print(f"Saved test CSV to {csv_path}")
 
-    year_csv_path = os.path.join(args.out_dir, f"test_year_metrics_{args.target}.csv")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    year_csv_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/result/final", f"{args.target}_{timestamp}.csv")
     _ = save_test_year_metrics(test_detail, years=[2023, 2024], out_path=year_csv_path)
     print(f"Saved per-year test metrics CSV to {year_csv_path}")
 

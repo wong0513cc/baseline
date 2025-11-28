@@ -30,7 +30,7 @@ class TransformerTimeEncoder(nn.Module):
         h = self.norm(h)
         return h.reshape(B, N, K, -1).permute(0, 2, 1, 3)     # [B,K,N,H]
     
-
+#MLP
 class MLPTimeEncoder(nn.Module):
     def __init__(self, d_in, hidden, depth = 2, dropout: float = 0.1, K: int = 12):
         super().__init__()
@@ -49,8 +49,7 @@ class MLPTimeEncoder(nn.Module):
         y = y + te
         y = self.ln(y)
         return y       
-    
-# Attention    
+       
 # Cross Atteniotn
 class CrossAttention(nn.Module):
     def __init__(self, input_size):
@@ -71,35 +70,10 @@ class CrossAttention(nn.Module):
         
         return output
 
-# Additive Attention
-class TemporalAttentionAggregator(nn.Module): # performance更好
-    def __init__(self, hidden: int, attn_hidden: int = 128, dropout: float = 0.1):
-        super().__init__()
-        self.scorer = nn.Sequential(
-            nn.LayerNorm(hidden),
-            nn.Linear(hidden, attn_hidden),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(attn_hidden, 1)
-        )
-
-    def forward(self, Z_time: torch.Tensor, mask: torch.Tensor = None):
-        # Z_time: [B,K,N,H]
-        scores = self.scorer(Z_time) #(B,K,N,1)
-        if mask is not None:
-            scores = scores.masked_fill(mask <= 0, float('-inf'))
-        alpha_time = F.softmax(scores, dim=1) # [B,K,N,1]
-
-        # (B,K,N,1) * (B,K,N,H) -> (B,K,N,H)
-        Z_year = torch.sum(alpha_time * Z_time, dim=1) # sum over dim=1 (K) -> (B,N,H)
-
-        # alpha_time [B,K,N,1] -> [B,N,K]
-        alpha_to_viz = alpha_time.squeeze(-1).permute(0, 2, 1)
-        return Z_year, alpha_to_viz
-    
+# Time Attention  
 # MHA    
 class MHA(nn.Module):
-    def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = True):
+    def __init__(self, hidden: int, num_heads: int = 4, dropout: float = 0.1, causal: bool = False):
         super().__init__()
         self.attn = nn.MultiheadAttention(
             embed_dim=hidden,
@@ -115,10 +89,10 @@ class MHA(nn.Module):
         attn_mask = mask.masked_fill(mask, float("-inf")).masked_fill(~mask, 0.0)
         return attn_mask
 
-    def forward(self, Z_time: torch.Tensor):
-        B, K, N, H = Z_time.shape
+    def forward(self, H_mod: torch.Tensor):
+        B, K, N, H = H_mod.shape
         # [B,K,N,H] -> [B,N,K,H] -> [B*N, K, H]
-        x = Z_time.permute(0, 2, 1, 3).reshape(B * N, K, H)
+        x = H_mod.permute(0, 2, 1, 3).reshape(B * N, K, H)
 
         if self.causal:
             attn_mask = self._get_causal_mask(K, x.device)   # [K,K]
@@ -131,14 +105,62 @@ class MHA(nn.Module):
         return out, None
     
 
-class SwitchLayer(nn.Module):
-    def __init__(self, hidden: int, q_mod: str, k_mod: str, v_mod: str,
-                 ca: CrossAttention, dropout: float = 0.1, residual_scale: float = 0.5):
+class TemporalAttentionAggregator(nn.Module):
+    def __init__(self, hidden: int, K: int = 12, attn_hidden: int = 256, dropout: float = 0.1):
         super().__init__()
-        self.ca = ca                     # 共用的一個 CrossAttention
-        self.q_mod = q_mod               # 'p', 'f', 'n', 'e'
-        self.k_mod = k_mod
-        self.v_mod = v_mod
+        self.K = K
+        self.H = hidden
+        self.scorer = nn.Sequential(
+            nn.LayerNorm(hidden * K),
+            nn.Linear(hidden * K, attn_hidden),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(attn_hidden, K) 
+        )
+
+    def forward(self, Z_time: torch.Tensor):
+        """
+        Z_time: [B,K,N,H]
+        """
+        B, K, N, H = Z_time.shape
+
+        # 把時間 & feature flatten： [B,K,N,H] -> [B,N,K*H]
+        Z_bnkh = Z_time.permute(0, 2, 1, 3).reshape(B * N, K * H)  # [B*N, K*H]
+        scores = self.scorer(Z_bnkh)  # [B*N, K]
+        # softmax over K [B*N,K]
+        alpha = F.softmax(scores, dim=-1)  # [B*N, K]
+
+        alpha_bnK = alpha.view(B, N, K).unsqueeze(-1)        # [B,N,K,1]
+        alpha_time = alpha_bnK.permute(0, 2, 1, 3)           # [B,K,N,1]
+
+        # 用這個 alpha_time 對 Z_time 做加權平均：sum over K
+        Z_year = torch.sum(alpha_time * Z_time, dim=1)       # [B,N,H]
+        alpha_to_viz = alpha_time.squeeze(-1).permute(0, 2, 1)  # [B,N,K]
+
+        return Z_year, alpha_to_viz
+
+
+
+
+
+# Fusion layer
+# Switch Attention做完整8次
+class SwitchLayer(nn.Module):
+    def __init__(self, hidden: int,
+                 q_mod: str,
+                 kv_pairs: list,
+                 ca: CrossAttention,
+                 dropout: float = 0.1,
+                 residual_scale: float = 0.5):
+        """
+            delta1 = CA(q, F, N)
+            delta2 = CA(q, N, F)
+            delta = (delta1 + delta2) / 2
+        """
+        super().__init__()
+        self.ca = ca
+        self.q_mod = q_mod          # 'p','f','n','e'
+        self.kv_pairs = kv_pairs    # list[tuple[str,str]]
         self.s = residual_scale
 
         self.ln1 = nn.LayerNorm(hidden)
@@ -151,17 +173,21 @@ class SwitchLayer(nn.Module):
         self.ln2 = nn.LayerNorm(hidden)
 
     def forward(self, Zp, Zf, Zn, Ze):
-        # 取出目前四個模態的表示
         d = {'p': Zp, 'f': Zf, 'n': Zn, 'e': Ze}
-        q = d[self.q_mod]   # [B,N,H]
-        k = d[self.k_mod]   # [B,N,H]
-        v = d[self.v_mod]   # [B,N,H]
+        q = d[self.q_mod]  # [B,N,H]
 
-        # Cross-attn 更新 q 這個模態
-        delta = self.ca(q, k, v)         # [B,N,H]
+        delta_acc = 0.0
+        for (k_mod, v_mod) in self.kv_pairs:
+            k = d[k_mod]   # [B,N,H]
+            v = d[v_mod]   # [B,N,H]
+            delta_acc = delta_acc + self.ca(q, k, v)  # [B,N,H]
+
+
+        delta = delta_acc / len(self.kv_pairs)
+
+        # 更新 q
         q_new = self.ln1(q + self.s * delta)
 
-        # FFN
         ff_out = self.ff(q_new)
         q_new = self.ln2(q_new + ff_out)
 
@@ -179,19 +205,28 @@ class SwitchLayer(nn.Module):
 class SwitchAttention(nn.Module):
     def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.5):
         super().__init__()
-        ca = CrossAttention(hidden)   # 共享的 QKV
+        ca = CrossAttention(hidden)   # 共享 QKV
 
         self.layers = nn.ModuleList([
-            SwitchLayer(hidden, 'p', 'f', 'n', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'f', 'n', 'e', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'n', 'e', 'p', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'e', 'p', 'f', ca, dropout, residual_scale),
+            # P: (F,N) & (N,F)
+            SwitchLayer(hidden, 'p', [('f', 'n'), ('n', 'f')], ca, dropout, residual_scale),
+
+            # F: (N,E) & (E,N)
+            SwitchLayer(hidden, 'f', [('n', 'e'), ('e', 'n')], ca, dropout, residual_scale),
+
+            # N: (E,P) & (P,E)
+            SwitchLayer(hidden, 'n', [('e', 'p'), ('p', 'e')], ca, dropout, residual_scale),
+
+            # E: (P,F) & (F,P)
+            SwitchLayer(hidden, 'e', [('p', 'f'), ('f', 'p')], ca, dropout, residual_scale),
         ])
 
     def forward(self, Zp, Zf, Zn, Ze):
         for layer in self.layers:
             Zp, Zf, Zn, Ze = layer(Zp, Zf, Zn, Ze)
         return Zp, Zf, Zn, Ze
+
+
 
 # Main model
 class ESGMultiModalModel(nn.Module):
@@ -209,15 +244,11 @@ class ESGMultiModalModel(nn.Module):
                  event_layers: int = 2,
                  ic_weight: float = 0.1,   
                  ic_type: str = "pearson",
-                 cl_weight: float = 0.0,   
-                 cl_tau: float = 0.07,
-                 freeze_enc: bool = True
+
                  ):
         super().__init__()
         self.ic_weight = ic_weight
         self.ic_type = ic_type
-        self.cl_weight = cl_weight
-        self.cl_tau = cl_tau
 
         # Encoders
         self.enc_price = MLPTimeEncoder(d_in=d_price, hidden=hidden, depth=2, dropout=dropout, K=12)
@@ -225,17 +256,13 @@ class ESGMultiModalModel(nn.Module):
         self.enc_news  = TransformerTimeEncoder(d_in=d_news, d_model=hidden, nhead=nhead_time, num_layers=news_layers, dropout=dropout)
         self.enc_event = MLPTimeEncoder(d_in=d_event, hidden=hidden, depth=2, dropout=dropout, K=12)
 
-        # graph
-        # self.grmp = GraphMessagePassing(hidden_dim=hidden, dropout=dropout)
-
         # multihead attention
-        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_price = MHA(hidden=hidden, num_heads=4, dropout=dropout, causal=False)
+        self.self_attn_fin = MHA(hidden=hidden, num_heads=4, dropout=dropout, causal=False)
+        self.self_attn_news = MHA(hidden=hidden, num_heads=4, dropout=dropout, causal=False)
+        self.self_attn_event = MHA(hidden=hidden, num_heads=4, dropout=dropout, causal=False)
 
-        # Attention
-        # additive attention
+        # mlp aggregator
         self.price_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
         self.fin_additive_attn= TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
         self.news_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
@@ -267,7 +294,7 @@ class ESGMultiModalModel(nn.Module):
         Hn_sa, _ = self.self_attn_news(Hn)
         He_sa, _ = self.self_attn_event(He)
 
-        # additive attn
+        # # additive attn
         Zp, alpha_p = self.price_additive_attn(Hp_sa)
         Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask=fm)
         Zn, alpha_n = self.news_additive_attn(Hn_sa)
@@ -278,7 +305,7 @@ class ESGMultiModalModel(nn.Module):
 
         # prediction layer
         # [B,N,H] * 4 -> [B,N, 4*H]
-
+        # Z = torch.cat([Hp.mean(dim=1), Hf.mean(dim=1), Hn.mean(dim=1), He.mean(dim=1)], dim=-1)
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
         # Z = torch.cat([Hp_aligned[:, -1],Hf_aligned[:, -1], Hn_aligned[:, -1], He_aligned[:, -1]], dim=-1)
         # Z = torch.cat([Hp_aligned.mean(dim=1), Hf_aligned.mean(dim=1), Hn_aligned.mean(dim=1), He_aligned.mean(dim=1)],dim=-1)
@@ -312,38 +339,17 @@ class ESGMultiModalModel(nn.Module):
             ic_per_b = _pearson_corr(pN, tN, dim=1)                    # [B]
             ic_company = ic_per_b.mean()
 
-            cl_loss = p.new_tensor(0.0)
+        
 
-            # if self.cl_weight > 0.0:
-                # cl_loss = multimodal_info_loss_all_pairs(
-                #     Zp, Zf, Zn, Ze,
-                #     tau=self.cl_tau,
-                #     mask_price=None,
-                #     mask_fin=(fm.squeeze(0) if (fm is not None and fm.size(0) == 1) else fm),
-                #     mask_news=None,
-                #     mask_event=None,
-                # )
-
-            # total loss：MSE + IC + CL
-            if self.cl_weight > 0.0:
-                # Zp, Zf, Zn, Ze: [B,N,H]
-                embeds = {
-                    "price": Zp,
-                    "fin":   Zf,
-                    "news":  Zn,
-                    "event": Ze,
-                }
-
+            # total loss：MSE + IC
             total = (
                 mse_company
                 + self.ic_weight * ((1.0 - ic_company) / 2.0)
-                + self.cl_weight * cl_loss 
             )
 
             out["losses"] = {
                 "mse": mse_company,
                 "ic_company": ic_company,
-                "cl": cl_loss,
                 "total": total
             }
 
