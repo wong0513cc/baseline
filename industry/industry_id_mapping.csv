@@ -1,0 +1,1071 @@
+ticker,cik,sic,sicDescription,entityType,stateOfIncorporation,sic_desc,industry_id
+FDP,1047340,100.0,Agricultural Production-Crops,operating,E9,AGRICULTURAL PRODUCTION-CROPS,4
+BV,1734713,700.0,Agricultural Services,operating,DE,AGRICULTURAL SERVICES,5
+CLF,764065,1000.0,Metal Mining,operating,OH,METAL MINING,115
+FCX,831259,1000.0,Metal Mining,operating,DE,METAL MINING,115
+SCCO,1001838,1000.0,Metal Mining,operating,DE,METAL MINING,115
+AU,1973832,1040.0,Gold and Silver Ores,other,X0,GOLD AND SILVER ORES,78
+CDE,215466,1040.0,Gold and Silver Ores,operating,DE,GOLD AND SILVER ORES,78
+NEM,1164727,1040.0,Gold and Silver Ores,operating,DE,GOLD AND SILVER ORES,78
+CCJ,1009001,1090.0,Miscellaneous Metal Ores,other,,MISCELLANEOUS METAL ORES,126
+CNR,1710366,1220.0,Silver Ores,operating,DC,SILVER ORES,242
+HCC,1691303,1220.0,Silver Ores,operating,DE,SILVER ORES,242
+BTU,1064728,1221.0,Bituminous Coal & Lignite Surface Mining,operating,DE,BITUMINOUS COAL & LIGNITE SURFACE MINING,19
+AMPY,1533924,1311.0,Crude Petroleum & Natural Gas,operating,,CRUDE PETROLEUM & NATURAL GAS,45
+AR,1433270,1311.0,Crude Petroleum & Natural Gas,operating,,CRUDE PETROLEUM & NATURAL GAS,45
+CIVI,1509589,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+CNX,1070412,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+CRK,23194,1311.0,Crude Petroleum & Natural Gas,operating,NV,CRUDE PETROLEUM & NATURAL GAS,45
+CTRA,858470,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+DVN,1090012,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+EOG,821189,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+EQT,33213,1311.0,Crude Petroleum & Natural Gas,operating,PA,CRUDE PETROLEUM & NATURAL GAS,45
+GPOR,874499,1311.0,Crude Petroleum & Natural Gas,operating,,CRUDE PETROLEUM & NATURAL GAS,45
+KOS,1509991,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+MTDR,1520006,1311.0,Crude Petroleum & Natural Gas,operating,TX,CRUDE PETROLEUM & NATURAL GAS,45
+MUR,717423,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+OVV,1792580,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+OXY,797468,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+PARR,821483,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+PR,1658566,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+RRC,315852,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+SD,1349436,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+SM,893538,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+TALO,1724965,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+TTI,844965,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+VTLE,1528129,1311.0,Crude Petroleum & Natural Gas,operating,DE,CRUDE PETROLEUM & NATURAL GAS,45
+WTI,1288403,1311.0,Crude Petroleum & Natural Gas,operating,TX,CRUDE PETROLEUM & NATURAL GAS,45
+HP,46765,1381.0,Drilling Oil & Gas Wells,operating,DE,DRILLING OIL & GAS WELLS,49
+NBR,1163739,1381.0,Drilling Oil & Gas Wells,operating,D0,DRILLING OIL & GAS WELLS,49
+NE,1895262,1381.0,Drilling Oil & Gas Wells,operating,X0,DRILLING OIL & GAS WELLS,49
+RIG,1451505,1381.0,Drilling Oil & Gas Wells,operating,V8,DRILLING OIL & GAS WELLS,49
+SDRL,1737706,1381.0,Drilling Oil & Gas Wells,operating,,DRILLING OIL & GAS WELLS,49
+CLB,1958086,1389.0,"Oil & Gas Field Services, NEC",operating,DE,"OIL & GAS FIELD SERVICES, NEC",144
+HAL,45012,1389.0,"Oil & Gas Field Services, NEC",operating,DE,"OIL & GAS FIELD SERVICES, NEC",144
+HLX,866829,1389.0,"Oil & Gas Field Services, NEC",operating,MN,"OIL & GAS FIELD SERVICES, NEC",144
+NINE,1532286,1389.0,"Oil & Gas Field Services, NEC",operating,DE,"OIL & GAS FIELD SERVICES, NEC",144
+OII,73756,1389.0,"Oil & Gas Field Services, NEC",operating,DE,"OIL & GAS FIELD SERVICES, NEC",144
+PUMP,1680247,1389.0,"Oil & Gas Field Services, NEC",operating,TX,"OIL & GAS FIELD SERVICES, NEC",144
+RNGR,1699039,1389.0,"Oil & Gas Field Services, NEC",operating,TX,"OIL & GAS FIELD SERVICES, NEC",144
+SLB,87347,1389.0,"Oil & Gas Field Services, NEC",operating,P8,"OIL & GAS FIELD SERVICES, NEC",144
+WTTR,1693256,1389.0,"Oil & Gas Field Services, NEC",operating,DE,"OIL & GAS FIELD SERVICES, NEC",144
+XPRO,1575828,1389.0,"Oil & Gas Field Services, NEC",operating,P7,"OIL & GAS FIELD SERVICES, NEC",144
+CMP,1227654,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,DE,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+HL,719413,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,DE,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+IPI,1421461,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,DE,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+MDU,67716,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+MLM,916076,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,NC,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+TECK,886986,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),other,A1,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+VMC,1396009,1400.0,Mining & Quarrying of  Nonmetallic Minerals (No Fuels),operating,NJ,MINING & QUARRYING OF  NONMETALLIC MINERALS (NO FUELS),119
+GEO,923796,1520.0,General Bldg Contractors - Residential Bldgs,operating,FL,GENERAL BLDG CONTRACTORS - RESIDENTIAL BLDGS,74
+IBP,1580905,1520.0,General Bldg Contractors - Residential Bldgs,operating,DE,GENERAL BLDG CONTRACTORS - RESIDENTIAL BLDGS,74
+LEN,920760,1520.0,General Bldg Contractors - Residential Bldgs,operating,DE,GENERAL BLDG CONTRACTORS - RESIDENTIAL BLDGS,74
+BZH,915840,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+CCS,1576940,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+DHI,882184,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+GRBK,1373670,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+KBH,795266,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+MHO,799292,1531.0,Operative Builders,operating,OH,OPERATIVE BUILDERS,146
+MTH,833079,1531.0,Operative Builders,operating,MD,OPERATIVE BUILDERS,146
+NVR,906163,1531.0,Operative Builders,operating,VA,OPERATIVE BUILDERS,146
+PHM,822416,1531.0,Operative Builders,operating,MI,OPERATIVE BUILDERS,146
+TMHC,1562476,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+TOL,794170,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+TPH,1561680,1531.0,Operative Builders,operating,DE,OPERATIVE BUILDERS,146
+TPC,77543,1540.0,General Bldg Contractors - Nonresidential Bldgs,operating,MA,GENERAL BLDG CONTRACTORS - NONRESIDENTIAL BLDGS,73
+FLR,1124198,1600.0,Heavy Construction Other Than Bldg Const - Contractors,operating,DE,HEAVY CONSTRUCTION OTHER THAN BLDG CONST - CONTRACTORS,84
+GVA,861459,1600.0,Heavy Construction Other Than Bldg Const - Contractors,operating,DE,HEAVY CONSTRUCTION OTHER THAN BLDG CONST - CONTRACTORS,84
+J,52988,1600.0,Heavy Construction Other Than Bldg Const - Contractors,operating,DE,HEAVY CONSTRUCTION OTHER THAN BLDG CONST - CONTRACTORS,84
+KBR,1357615,1600.0,Heavy Construction Other Than Bldg Const - Contractors,operating,DE,HEAVY CONSTRUCTION OTHER THAN BLDG CONST - CONTRACTORS,84
+DY,67215,1623.0,"Water, Sewer, Pipeline, Comm & Power Line Construction",operating,FL,"WATER, SEWER, PIPELINE, COMM & POWER LINE CONSTRUCTION",268
+MTZ,15615,1623.0,"Water, Sewer, Pipeline, Comm & Power Line Construction",operating,FL,"WATER, SEWER, PIPELINE, COMM & POWER LINE CONSTRUCTION",268
+PRIM,1361538,1623.0,"Water, Sewer, Pipeline, Comm & Power Line Construction",operating,DE,"WATER, SEWER, PIPELINE, COMM & POWER LINE CONSTRUCTION",268
+AGX,100591,1700.0,Construction - Special Trade Contractors,operating,DE,CONSTRUCTION - SPECIAL TRADE CONTRACTORS,41
+BLD,1633931,1700.0,Construction - Special Trade Contractors,operating,DE,CONSTRUCTION - SPECIAL TRADE CONTRACTORS,41
+EME,105634,1731.0,Electrical Work,operating,DE,ELECTRICAL WORK,54
+FIX,1035983,1731.0,Electrical Work,operating,,ELECTRICAL WORK,54
+PWR,1050915,1731.0,Electrical Work,operating,DE,ELECTRICAL WORK,54
+BGS,1278027,2000.0,Food and Kindred Products,operating,DE,FOOD AND KINDRED PRODUCTS,69
+CAG,23217,2000.0,Food and Kindred Products,operating,DE,FOOD AND KINDRED PRODUCTS,69
+FLO,1128928,2000.0,Food and Kindred Products,operating,GA,FOOD AND KINDRED PRODUCTS,69
+HRL,48465,2011.0,Meat Packing Plants,operating,DE,MEAT PACKING PLANTS,109
+TSN,100493,2015.0,Poultry Slaughtering and Processing,operating,DE,POULTRY SLAUGHTERING AND PROCESSING,164
+LW,1679273,2030.0,"Canned, Frozen & Preservd Fruit, Veg & Food Specialties",operating,DE,"CANNED, FROZEN & PRESERVD FRUIT, VEG & FOOD SPECIALTIES",26
+THS,1320695,2030.0,"Canned, Frozen & Preservd Fruit, Veg & Food Specialties",operating,DE,"CANNED, FROZEN & PRESERVD FRUIT, VEG & FOOD SPECIALTIES",26
+SJM,91419,2033.0,"Canned, Fruits, Veg, Preserves, Jams & Jellies",operating,OH,"CANNED, FRUITS, VEG, PRESERVES, JAMS & JELLIES",27
+GIS,40704,2040.0,Grain Mill Products,operating,DE,GRAIN MILL PRODUCTS,79
+INGR,1046257,2040.0,Grain Mill Products,operating,DE,GRAIN MILL PRODUCTS,79
+K,55067,2040.0,Grain Mill Products,operating,DE,GRAIN MILL PRODUCTS,79
+POST,1530950,2040.0,Grain Mill Products,operating,MO,GRAIN MILL PRODUCTS,79
+HSY,47111,2060.0,Sugar & Confectionery Products,operating,DE,SUGAR & CONFECTIONERY PRODUCTS,251
+TR,98677,2060.0,Sugar & Confectionery Products,operating,VA,SUGAR & CONFECTIONERY PRODUCTS,251
+ADM,7084,2070.0,Fats & Oils,operating,DE,FATS & OILS,65
+BG,1996862,2070.0,Fats & Oils,operating,V8,FATS & OILS,65
+DAR,916540,2070.0,Fats & Oils,operating,DE,FATS & OILS,65
+KO,21344,2080.0,Beverages,operating,DE,BEVERAGES,17
+PRMB,2042694,2080.0,Beverages,operating,DE,BEVERAGES,17
+STZ,16918,2080.0,Beverages,operating,DE,BEVERAGES,17
+BFb,14693,2080.0,Beverages,operating,DE,BEVERAGES,17
+SAM,949870,2082.0,Malt Beverages,operating,MA,MALT BEVERAGES,107
+TAP,24545,2082.0,Malt Beverages,operating,DE,MALT BEVERAGES,107
+MED,910329,2090.0,Miscellaneous Food Preparations & Kindred Products,operating,DE,MISCELLANEOUS FOOD PREPARATIONS & KINDRED PRODUCTS,124
+MKC,63754,2090.0,Miscellaneous Food Preparations & Kindred Products,operating,MD,MISCELLANEOUS FOOD PREPARATIONS & KINDRED PRODUCTS,124
+MO,764180,2111.0,Cigarettes,operating,VA,CIGARETTES,31
+PM,1413329,2111.0,Cigarettes,operating,VA,CIGARETTES,31
+UFI,100726,2200.0,Textile Mill Products,operating,NY,TEXTILE MILL PRODUCTS,257
+CULP,723603,2211.0,"Broadwoven Fabric Mills, Cotton",operating,NC,"BROADWOVEN FABRIC MILLS, COTTON",22
+AIN,819793,2221.0,"Broadwoven Fabric Mills, Man Made Fiber & Silk",operating,DE,"BROADWOVEN FABRIC MILLS, MAN MADE FIBER & SILK",23
+MHK,851968,2273.0,Carpets & Rugs,operating,DE,CARPETS & RUGS,28
+CRI,1060822,2300.0,Apparel & Other Finishd Prods of  Fabrics & Similar Matl,operating,DE,APPAREL & OTHER FINISHD PRODS OF  FABRICS & SIMILAR MATL,13
+UAA,1336917,2300.0,Apparel & Other Finishd Prods of  Fabrics & Similar Matl,operating,MD,APPAREL & OTHER FINISHD PRODS OF  FABRICS & SIMILAR MATL,13
+PVH,78239,2320.0,"Men's & Boys' Furnishgs, Work Clothg, & Allied Garments",operating,DE,"MEN'S & BOYS' FURNISHGS, WORK CLOTHG, & ALLIED GARMENTS",111
+RL,1037038,2320.0,"Men's & Boys' Furnishgs, Work Clothg, & Allied Garments",operating,DE,"MEN'S & BOYS' FURNISHGS, WORK CLOTHG, & ALLIED GARMENTS",111
+VFC,103379,2320.0,"Men's & Boys' Furnishgs, Work Clothg, & Allied Garments",operating,PA,"MEN'S & BOYS' FURNISHGS, WORK CLOTHG, & ALLIED GARMENTS",111
+GES,912463,2340.0,"Women's, Misses':  Children's & Infants' Undergarments",operating,DE,"WOMEN'S, MISSES':  CHILDREN'S & INFANTS' UNDERGARMENTS",288
+KOP,1315257,2400.0,Lumber & Wood Products (No Furniture),operating,PA,LUMBER & WOOD PRODUCTS (NO FURNITURE),105
+LPX,60519,2400.0,Lumber & Wood Products (No Furniture),operating,DE,LUMBER & WOOD PRODUCTS (NO FURNITURE),105
+TREX,1069878,2400.0,Lumber & Wood Products (No Furniture),operating,DE,LUMBER & WOOD PRODUCTS (NO FURNITURE),105
+FBIN,1519751,2430.0,"Millwood, Veneer, Plywood, & Structural Wood Members",operating,DE,"MILLWOOD, VENEER, PLYWOOD, & STRUCTURAL WOOD MEMBERS",118
+JELD,1674335,2430.0,"Millwood, Veneer, Plywood, & Structural Wood Members",operating,DE,"MILLWOOD, VENEER, PLYWOOD, & STRUCTURAL WOOD MEMBERS",118
+SKY,90896,2451.0,Mobile Homes,operating,IN,MOBILE HOMES,129
+LEG,58492,2510.0,Household Furniture,operating,MO,HOUSEHOLD FURNITURE,90
+LZB,57131,2510.0,Household Furniture,operating,MI,HOUSEHOLD FURNITURE,90
+SGI,1206264,2510.0,Household Furniture,operating,DE,HOUSEHOLD FURNITURE,90
+ETD,896156,2511.0,"Wood Household Furniture, (No Upholstered)",operating,DE,"WOOD HOUSEHOLD FURNITURE, (NO UPHOLSTERED)",289
+HNI,48287,2522.0,Office Furniture (No Wood),operating,IA,OFFICE FURNITURE (NO WOOD),141
+SCS,1050825,2522.0,Office Furniture (No Wood),operating,MI,OFFICE FURNITURE (NO WOOD),141
+IP,51434,2621.0,Paper Mills,operating,NY,PAPER MILLS,150
+MAGN,41719,2621.0,Paper Mills,operating,PA,PAPER MILLS,150
+MATV,1000623,2621.0,Paper Mills,operating,DE,PAPER MILLS,150
+CLW,1441236,2631.0,Paperboard Mills,operating,DE,PAPERBOARD MILLS,152
+GPK,1408075,2650.0,Paperboard Containers & Boxes,operating,DE,PAPERBOARD CONTAINERS & BOXES,151
+PKG,75677,2650.0,Paperboard Containers & Boxes,operating,,PAPERBOARD CONTAINERS & BOXES,151
+SON,91767,2650.0,Paperboard Containers & Boxes,operating,SC,PAPERBOARD CONTAINERS & BOXES,151
+SW,2005951,2650.0,Paperboard Containers & Boxes,operating,L2,PAPERBOARD CONTAINERS & BOXES,151
+AVY,8818,2670.0,Converted Paper & Paperboard Prods (No Contaners/Boxes),operating,DE,CONVERTED PAPER & PAPERBOARD PRODS (NO CONTANERS/BOXES),44
+KMB,55785,2670.0,Converted Paper & Paperboard Prods (No Contaners/Boxes),operating,DE,CONVERTED PAPER & PAPERBOARD PRODS (NO CONTANERS/BOXES),44
+GCI,1579684,2711.0,Newspapers: Publishing or  Publishing & Printing,operating,,NEWSPAPERS: PUBLISHING OR  PUBLISHING & PRINTING,140
+NYT,71691,2711.0,Newspapers: Publishing or  Publishing & Printing,operating,NY,NEWSPAPERS: PUBLISHING OR  PUBLISHING & PRINTING,140
+WLY,107140,2731.0,Books: Publishing or  Publishing & Printing,operating,NY,BOOKS: PUBLISHING OR  PUBLISHING & PRINTING,21
+QUAD,1481792,2750.0,Commercial Printing,operating,WI,COMMERCIAL PRINTING,35
+ACCO,712034,2780.0,"Blankbooks, Looseleaf Binders & Bookbindg & Relatd Work",operating,DE,"BLANKBOOKS, LOOSELEAF BINDERS & BOOKBINDG & RELATD WORK",20
+DLX,27996,2780.0,"Blankbooks, Looseleaf Binders & Bookbindg & Relatd Work",operating,MN,"BLANKBOOKS, LOOSELEAF BINDERS & BOOKBINDG & RELATD WORK",20
+CC,1627223,2800.0,Chemicals & Allied Products,operating,DE,CHEMICALS & ALLIED PRODUCTS,30
+FMC,37785,2800.0,Chemicals & Allied Products,operating,DE,CHEMICALS & ALLIED PRODUCTS,30
+HUN,1307954,2800.0,Chemicals & Allied Products,operating,DE,CHEMICALS & ALLIED PRODUCTS,30
+NGVT,1653477,2800.0,Chemicals & Allied Products,operating,DE,CHEMICALS & ALLIED PRODUCTS,30
+OLN,74303,2800.0,Chemicals & Allied Products,operating,VA,CHEMICALS & ALLIED PRODUCTS,30
+APD,2969,2810.0,Industrial Inorganic Chemicals,operating,DE,INDUSTRIAL INORGANIC CHEMICALS,92
+KRO,1257640,2810.0,Industrial Inorganic Chemicals,operating,,INDUSTRIAL INORGANIC CHEMICALS,92
+MTX,891014,2810.0,Industrial Inorganic Chemicals,operating,DE,INDUSTRIAL INORGANIC CHEMICALS,92
+NL,72162,2810.0,Industrial Inorganic Chemicals,operating,NJ,INDUSTRIAL INORGANIC CHEMICALS,92
+TROX,1530804,2810.0,Industrial Inorganic Chemicals,operating,X0,INDUSTRIAL INORGANIC CHEMICALS,92
+VHI,59255,2810.0,Industrial Inorganic Chemicals,operating,DE,INDUSTRIAL INORGANIC CHEMICALS,92
+CE,1306830,2820.0,"Plastic Material, Synth Resin/Rubber, Cellulos (No Glass)",operating,DE,"PLASTIC MATERIAL, SYNTH RESIN/RUBBER, CELLULOS (NO GLASS)",160
+SEE,1012100,2820.0,"Plastic Material, Synth Resin/Rubber, Cellulos (No Glass)",operating,DE,"PLASTIC MATERIAL, SYNTH RESIN/RUBBER, CELLULOS (NO GLASS)",160
+CTA,30554,2820.0,"Plastic Material, Synth Resin/Rubber, Cellulos (No Glass)",operating,DE,"PLASTIC MATERIAL, SYNTH RESIN/RUBBER, CELLULOS (NO GLASS)",160
+ALB,915913,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,VA,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+ASIX,1673985,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,DE,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+AVNT,1122976,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+DD,1666700,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,DE,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+EMN,915389,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,DE,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+HXL,717605,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,DE,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+ROG,84748,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,MA,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+TSE,1519061,2821.0,"Plastic Materials, Synth Resins & Nonvulcan Elastomers",operating,L2,"PLASTIC MATERIALS, SYNTH RESINS & NONVULCAN ELASTOMERS",161
+USNA,896264,2833.0,Medicinal Chemicals & Botanical Products,operating,UT,MEDICINAL CHEMICALS & BOTANICAL PRODUCTS,110
+ABBV,1551152,2834.0,Pharmaceutical Preparations,operating,DE,PHARMACEUTICAL PREPARATIONS,157
+ABT,1800,2834.0,Pharmaceutical Preparations,operating,IL,PHARMACEUTICAL PREPARATIONS,157
+BMY,14272,2834.0,Pharmaceutical Preparations,operating,DE,PHARMACEUTICAL PREPARATIONS,157
+EBS,1367644,2834.0,Pharmaceutical Preparations,operating,DE,PHARMACEUTICAL PREPARATIONS,157
+JNJ,200406,2834.0,Pharmaceutical Preparations,operating,NJ,PHARMACEUTICAL PREPARATIONS,157
+LLY,59478,2834.0,Pharmaceutical Preparations,operating,IN,PHARMACEUTICAL PREPARATIONS,157
+MRK,310158,2834.0,Pharmaceutical Preparations,operating,NJ,PHARMACEUTICAL PREPARATIONS,157
+PBH,1295947,2834.0,Pharmaceutical Preparations,operating,,PHARMACEUTICAL PREPARATIONS,157
+PFE,78003,2834.0,Pharmaceutical Preparations,operating,DE,PHARMACEUTICAL PREPARATIONS,157
+PRGO,1585364,2834.0,Pharmaceutical Preparations,operating,L2,PHARMACEUTICAL PREPARATIONS,157
+ZTS,1555280,2834.0,Pharmaceutical Preparations,operating,,PHARMACEUTICAL PREPARATIONS,157
+QGEN,1015820,2836.0,"Biological Products, (No Diagnostic Substances)",other,P7,"BIOLOGICAL PRODUCTS, (NO DIAGNOSTIC SUBSTANCES)",18
+CHD,313927,2840.0,"Soap, Detergents, Cleang Preparations, Perfumes, Cosmetics",operating,DE,"SOAP, DETERGENTS, CLEANG PREPARATIONS, PERFUMES, COSMETICS",243
+ECL,31462,2840.0,"Soap, Detergents, Cleang Preparations, Perfumes, Cosmetics",operating,DE,"SOAP, DETERGENTS, CLEANG PREPARATIONS, PERFUMES, COSMETICS",243
+PG,80424,2840.0,"Soap, Detergents, Cleang Preparations, Perfumes, Cosmetics",operating,OH,"SOAP, DETERGENTS, CLEANG PREPARATIONS, PERFUMES, COSMETICS",243
+SCL,94049,2840.0,"Soap, Detergents, Cleang Preparations, Perfumes, Cosmetics",operating,DE,"SOAP, DETERGENTS, CLEANG PREPARATIONS, PERFUMES, COSMETICS",243
+CLX,21076,2842.0,"Specialty Cleaning, Polishing and Sanitation Preparations",operating,DE,"SPECIALTY CLEANING, POLISHING AND SANITATION PREPARATIONS",245
+CL,21665,2844.0,"Perfumes, Cosmetics & Other Toilet Preparations",operating,DE,"PERFUMES, COSMETICS & OTHER TOILET PREPARATIONS",154
+COTY,1024305,2844.0,"Perfumes, Cosmetics & Other Toilet Preparations",operating,,"PERFUMES, COSMETICS & OTHER TOILET PREPARATIONS",154
+EL,1001250,2844.0,"Perfumes, Cosmetics & Other Toilet Preparations",operating,DE,"PERFUMES, COSMETICS & OTHER TOILET PREPARATIONS",154
+EPC,1096752,2844.0,"Perfumes, Cosmetics & Other Toilet Preparations",operating,MO,"PERFUMES, COSMETICS & OTHER TOILET PREPARATIONS",154
+AXTA,1616862,2851.0,"Paints, Varnishes, Lacquers, Enamels & Allied Prods",operating,D0,"PAINTS, VARNISHES, LACQUERS, ENAMELS & ALLIED PRODS",149
+PPG,79879,2851.0,"Paints, Varnishes, Lacquers, Enamels & Allied Prods",operating,PA,"PAINTS, VARNISHES, LACQUERS, ENAMELS & ALLIED PRODS",149
+RPM,110621,2851.0,"Paints, Varnishes, Lacquers, Enamels & Allied Prods",operating,DE,"PAINTS, VARNISHES, LACQUERS, ENAMELS & ALLIED PRODS",149
+FF,1337298,2860.0,Industrial Organic Chemicals,operating,DE,INDUSTRIAL ORGANIC CHEMICALS,94
+IFF,51253,2860.0,Industrial Organic Chemicals,operating,NY,INDUSTRIAL ORGANIC CHEMICALS,94
+LYB,1489393,2860.0,Industrial Organic Chemicals,operating,P7,INDUSTRIAL ORGANIC CHEMICALS,94
+NEU,1282637,2860.0,Industrial Organic Chemicals,operating,VA,INDUSTRIAL ORGANIC CHEMICALS,94
+REX,744187,2860.0,Industrial Organic Chemicals,operating,DE,INDUSTRIAL ORGANIC CHEMICALS,94
+SXT,310142,2860.0,Industrial Organic Chemicals,operating,WI,INDUSTRIAL ORGANIC CHEMICALS,94
+WLK,1262823,2860.0,Industrial Organic Chemicals,operating,DE,INDUSTRIAL ORGANIC CHEMICALS,94
+AVD,5981,2870.0,Agricultural Chemicals,operating,DE,AGRICULTURAL CHEMICALS,3
+CF,1324404,2870.0,Agricultural Chemicals,operating,DE,AGRICULTURAL CHEMICALS,3
+MOS,1285785,2870.0,Agricultural Chemicals,operating,,AGRICULTURAL CHEMICALS,3
+SMG,825542,2870.0,Agricultural Chemicals,operating,OH,AGRICULTURAL CHEMICALS,3
+CBT,16040,2890.0,Miscellaneous Chemical Products,operating,DE,MISCELLANEOUS CHEMICAL PRODUCTS,121
+ESI,1590714,2890.0,Miscellaneous Chemical Products,operating,,MISCELLANEOUS CHEMICAL PRODUCTS,121
+FTK,928054,2890.0,Miscellaneous Chemical Products,operating,DE,MISCELLANEOUS CHEMICAL PRODUCTS,121
+FUL,39368,2891.0,Adhesives & Sealants,operating,MN,ADHESIVES & SEALANTS,2
+COP,1163165,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+CVI,1376139,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+CVX,93410,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+DK,1694426,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+MPC,1510295,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+PBF,1534504,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+PSX,1534701,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+VLO,1035002,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+XOM,34088,2911.0,Petroleum Refining,operating,NJ,PETROLEUM REFINING,156
+HES,4447,2911.0,Petroleum Refining,operating,DE,PETROLEUM REFINING,156
+KWR,81362,2990.0,Miscellaneous Products of  Petroleum & Coal,operating,PA,MISCELLANEOUS PRODUCTS OF  PETROLEUM & COAL,127
+VVV,1674910,2990.0,Miscellaneous Products of  Petroleum & Coal,operating,,MISCELLANEOUS PRODUCTS OF  PETROLEUM & COAL,127
+DECK,910521,3021.0,Rubber & Plastics Footwear,operating,DE,RUBBER & PLASTICS FOOTWEAR,199
+NKE,320187,3021.0,Rubber & Plastics Footwear,operating,OR,RUBBER & PLASTICS FOOTWEAR,199
+NPO,1164863,3050.0,"Gaskets, Packg & Sealg Devices & Rubber & Plastics Hose",operating,NC,"GASKETS, PACKG & SEALG DEVICES & RUBBER & PLASTICS HOSE",72
+CSL,790051,3060.0,"Fabricated Rubber Products, NEC",operating,DE,"FABRICATED RUBBER PRODUCTS, NEC",62
+WMS,1604028,3086.0,Plastics Foam Products,operating,DE,PLASTICS FOAM PRODUCTS,162
+ATR,896622,3089.0,"Plastics Products, NEC",operating,DE,"PLASTICS PRODUCTS, NEC",163
+AWI,7431,3089.0,"Plastics Products, NEC",operating,PA,"PLASTICS PRODUCTS, NEC",163
+MYE,69488,3089.0,"Plastics Products, NEC",operating,OH,"PLASTICS PRODUCTS, NEC",163
+BERY,1378992,3089.0,"Plastics Products, NEC",operating,DE,"PLASTICS PRODUCTS, NEC",163
+CPRI,1530721,3100.0,Leather & Leather Products,operating,D8,LEATHER & LEATHER PRODUCTS,103
+TPR,1116132,3100.0,Leather & Leather Products,operating,MD,LEATHER & LEATHER PRODUCTS,103
+CAL,14707,3140.0,"Footwear, (No Rubber)",operating,NY,"FOOTWEAR, (NO RUBBER)",70
+WWW,110471,3140.0,"Footwear, (No Rubber)",operating,MI,"FOOTWEAR, (NO RUBBER)",70
+SKX,1065837,3140.0,"Footwear, (No Rubber)",operating,DE,"FOOTWEAR, (NO RUBBER)",70
+OI,812074,3221.0,Glass Containers,operating,DE,GLASS CONTAINERS,77
+CRH,849395,3241.0,"Cement, Hydraulic",operating,L2,"CEMENT, HYDRAULIC",29
+EXP,918646,3241.0,"Cement, Hydraulic",operating,DE,"CEMENT, HYDRAULIC",29
+OC,1370946,3290.0,"Abrasive, Asbestos & Misc Nonmetallic Mineral Prods",operating,DE,"ABRASIVE, ASBESTOS & MISC NONMETALLIC MINERAL PRODS",0
+IIIN,764401,3310.0,"Steel Works, Blast Furnaces & Rolling & Finishing Mills",operating,NC,"STEEL WORKS, BLAST FURNACES & ROLLING & FINISHING MILLS",249
+WOR,108516,3310.0,"Steel Works, Blast Furnaces & Rolling & Finishing Mills",operating,OH,"STEEL WORKS, BLAST FURNACES & ROLLING & FINISHING MILLS",249
+CMC,22444,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,DE,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+CRS,17843,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,DE,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+MTUS,1598428,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,OH,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+NUE,73309,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,DE,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+SXC,1514705,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+TWI,899751,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,IL,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+X,1163302,3312.0,"Steel Works, Blast Furnaces & Rolling Mills (Coke Ovens)",operating,DE,"STEEL WORKS, BLAST FURNACES & ROLLING MILLS (COKE OVENS)",250
+ATI,1018963,3317.0,Steel Pipe & Tubes,operating,DE,STEEL PIPE & TUBES,248
+AA,1675149,3334.0,Primary Production of  Aluminum,operating,DE,PRIMARY PRODUCTION OF  ALUMINUM,165
+HWM,4281,3350.0,Rolling Drawing & Extruding of  Nonferrous Metals,operating,DE,ROLLING DRAWING & EXTRUDING OF  NONFERROUS METALS,198
+MLI,89439,3350.0,Rolling Drawing & Extruding of  Nonferrous Metals,operating,DE,ROLLING DRAWING & EXTRUDING OF  NONFERROUS METALS,198
+NX,1423221,3350.0,Rolling Drawing & Extruding of  Nonferrous Metals,operating,DE,ROLLING DRAWING & EXTRUDING OF  NONFERROUS METALS,198
+TG,850429,3350.0,Rolling Drawing & Extruding of  Nonferrous Metals,operating,VA,ROLLING DRAWING & EXTRUDING OF  NONFERROUS METALS,198
+BDC,913142,3357.0,Drawing & Insulating of  Nonferrous Wire,operating,DE,DRAWING & INSULATING OF  NONFERROUS WIRE,48
+GLW,24741,3357.0,Drawing & Insulating of  Nonferrous Wire,operating,NY,DRAWING & INSULATING OF  NONFERROUS WIRE,48
+BALL,9389,3411.0,Metal Cans,operating,IN,METAL CANS,112
+CCK,1219601,3411.0,Metal Cans,operating,PA,METAL CANS,112
+SLGN,849869,3411.0,Metal Cans,operating,DE,METAL CANS,112
+GEF,43920,3412.0,"Metal Shipping Barrels, Drums, Kegs & Pails",operating,DE,"METAL SHIPPING BARRELS, DRUMS, KEGS & PAILS",116
+SNA,91440,3420.0,"Cutlery, Handtools & General Hardware",operating,DE,"CUTLERY, HANDTOOLS & GENERAL HARDWARE",46
+SSD,920371,3420.0,"Cutlery, Handtools & General Hardware",operating,DE,"CUTLERY, HANDTOOLS & GENERAL HARDWARE",46
+SWK,93556,3420.0,"Cutlery, Handtools & General Hardware",operating,CT,"CUTLERY, HANDTOOLS & GENERAL HARDWARE",46
+MAS,62996,3430.0,"Heating Equip, Except Elec & Warm Air; & Plumbing Fixtures",operating,DE,"HEATING EQUIP, EXCEPT ELEC & WARM AIR; & PLUMBING FIXTURES",82
+BW,1630805,3433.0,"Heating Equipment, Except Electric & Warm Air Furnaces",operating,DE,"HEATING EQUIPMENT, EXCEPT ELECTRIC & WARM AIR FURNACES",83
+PRLB,1443669,3440.0,Fabricated Structural Metal Products,operating,MN,FABRICATED STRUCTURAL METAL PRODUCTS,63
+VATE,1006837,3440.0,Fabricated Structural Metal Products,operating,DE,FABRICATED STRUCTURAL METAL PRODUCTS,63
+VMI,102729,3440.0,Fabricated Structural Metal Products,operating,DE,FABRICATED STRUCTURAL METAL PRODUCTS,63
+GFF,50725,3442.0,"Metal Doors, Sash, Frames, Moldings & Trim",operating,DE,"METAL DOORS, SASH, FRAMES, MOLDINGS & TRIM",113
+GTLS,892553,3443.0,Fabricated Plate Work (Boiler Shops),operating,DE,FABRICATED PLATE WORK (BOILER SHOPS),61
+MTRN,1104657,3460.0,Metal Forgings & Stampings,operating,OH,METAL FORGINGS & STAMPINGS,114
+AZZ,8947,3470.0,"Coating, Engraving & Allied Services",operating,TX,"COATING, ENGRAVING & ALLIED SERVICES",32
+CXT,25445,3490.0,Miscellaneous Fabricated Metal Products,operating,DE,MISCELLANEOUS FABRICATED METAL PRODUCTS,123
+HLIO,1024795,3490.0,Miscellaneous Fabricated Metal Products,operating,FL,MISCELLANEOUS FABRICATED METAL PRODUCTS,123
+MWA,1350593,3490.0,Miscellaneous Fabricated Metal Products,operating,DE,MISCELLANEOUS FABRICATED METAL PRODUCTS,123
+PH,76334,3490.0,Miscellaneous Fabricated Metal Products,operating,OH,MISCELLANEOUS FABRICATED METAL PRODUCTS,123
+WTS,795403,3490.0,Miscellaneous Fabricated Metal Products,operating,DE,MISCELLANEOUS FABRICATED METAL PRODUCTS,123
+BC,14930,3510.0,Engines & Turbines,operating,DE,ENGINES & TURBINES,60
+BWXT,1486957,3510.0,Engines & Turbines,operating,DE,ENGINES & TURBINES,60
+CMI,26172,3510.0,Engines & Turbines,operating,IN,ENGINES & TURBINES,60
+AGCO,880266,3523.0,Farm Machinery & Equipment,operating,DE,FARM MACHINERY & EQUIPMENT,64
+ALG,897077,3523.0,Farm Machinery & Equipment,operating,DE,FARM MACHINERY & EQUIPMENT,64
+DE,315189,3523.0,Farm Machinery & Equipment,operating,DE,FARM MACHINERY & EQUIPMENT,64
+LNN,836157,3523.0,Farm Machinery & Equipment,operating,DE,FARM MACHINERY & EQUIPMENT,64
+TTC,737758,3524.0,Lawn & Garden Tractors & Home Lawn & Gardens Equip,operating,MN,LAWN & GARDEN TRACTORS & HOME LAWN & GARDENS EQUIP,102
+DOV,29905,3530.0,"Construction, Mining & Materials Handling Machinery & Equip",operating,NY,"CONSTRUCTION, MINING & MATERIALS HANDLING MACHINERY & EQUIP",43
+CAT,18230,3531.0,Construction Machinery & Equip,operating,DE,CONSTRUCTION MACHINERY & EQUIP,42
+CNH,1567094,3531.0,Construction Machinery & Equip,operating,P7,CONSTRUCTION MACHINERY & EQUIP,42
+MTW,61986,3531.0,Construction Machinery & Equip,operating,WI,CONSTRUCTION MACHINERY & EQUIP,42
+PLOW,1287213,3531.0,Construction Machinery & Equip,operating,DE,CONSTRUCTION MACHINERY & EQUIP,42
+DNOW,1599617,3533.0,Oil & Gas Field Machinery & Equipment,operating,DE,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+FET,1401257,3533.0,Oil & Gas Field Machinery & Equipment,operating,DE,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+FTI,1681459,3533.0,Oil & Gas Field Machinery & Equipment,operating,X0,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+INVX,1042893,3533.0,Oil & Gas Field Machinery & Equipment,operating,DE,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+NOV,1021860,3533.0,Oil & Gas Field Machinery & Equipment,operating,DE,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+OIS,1121484,3533.0,Oil & Gas Field Machinery & Equipment,operating,DE,OIL & GAS FIELD MACHINERY & EQUIPMENT,143
+HY,1173514,3537.0,"Industrial Trucks, Tractors, Trailors & Stackers",operating,DE,"INDUSTRIAL TRUCKS, TRACTORS, TRAILORS & STACKERS",95
+TEX,97216,3537.0,"Industrial Trucks, Tractors, Trailors & Stackers",operating,DE,"INDUSTRIAL TRUCKS, TRACTORS, TRAILORS & STACKERS",95
+SPXC,88205,3540.0,Metalworkg Machinery & Equipment,operating,DE,METALWORKG MACHINERY & EQUIPMENT,117
+KMT,55242,3541.0,"Machine Tools, Metal Cutting Types",operating,PA,"MACHINE TOOLS, METAL CUTTING TYPES",106
+JBTM,1433660,3550.0,Special Industry Machinery (No Metalworking Machinery),operating,DE,SPECIAL INDUSTRY MACHINERY (NO METALWORKING MACHINERY),244
+KAI,886346,3550.0,Special Industry Machinery (No Metalworking Machinery),operating,DE,SPECIAL INDUSTRY MACHINERY (NO METALWORKING MACHINERY),244
+PNR,77360,3550.0,Special Industry Machinery (No Metalworking Machinery),operating,L2,SPECIAL INDUSTRY MACHINERY (NO METALWORKING MACHINERY),244
+GTES,1718512,3560.0,General Industrial Machinery & Equipment,operating,X0,GENERAL INDUSTRIAL MACHINERY & EQUIPMENT,75
+IR,1699150,3560.0,General Industrial Machinery & Equipment,operating,DE,GENERAL INDUSTRIAL MACHINERY & EQUIPMENT,75
+ITW,49826,3560.0,General Industrial Machinery & Equipment,operating,DE,GENERAL INDUSTRIAL MACHINERY & EQUIPMENT,75
+ZWS,1439288,3560.0,General Industrial Machinery & Equipment,operating,DE,GENERAL INDUSTRIAL MACHINERY & EQUIPMENT,75
+FLS,30625,3561.0,Pumps & Pumping Equipment,operating,NY,PUMPS & PUMPING EQUIPMENT,167
+GGG,42888,3561.0,Pumps & Pumping Equipment,operating,MN,PUMPS & PUMPING EQUIPMENT,167
+GRC,42682,3561.0,Pumps & Pumping Equipment,operating,OH,PUMPS & PUMPING EQUIPMENT,167
+IEX,832101,3561.0,Pumps & Pumping Equipment,operating,DE,PUMPS & PUMPING EQUIPMENT,167
+ITT,216228,3561.0,Pumps & Pumping Equipment,operating,,PUMPS & PUMPING EQUIPMENT,167
+XYL,1524472,3561.0,Pumps & Pumping Equipment,operating,IN,PUMPS & PUMPING EQUIPMENT,167
+RBC,1324948,3562.0,Ball & Roller Bearings,operating,,BALL & ROLLER BEARINGS,16
+TKR,98362,3562.0,Ball & Roller Bearings,operating,OH,BALL & ROLLER BEARINGS,16
+DCI,29644,3564.0,Industrial & Commercial Fans & Blowers & Air Purifing Equip,operating,DE,INDUSTRIAL & COMMERCIAL FANS & BLOWERS & AIR PURIFING EQUIP,91
+RRX,82811,3569.0,"General Industrial Machinery & Equipment, NEC",operating,WI,"GENERAL INDUSTRIAL MACHINERY & EQUIPMENT, NEC",76
+HPE,1645590,3570.0,Computer & office Equipment,operating,DE,COMPUTER & OFFICE EQUIPMENT,38
+HPQ,47217,3570.0,Computer & office Equipment,operating,DE,COMPUTER & OFFICE EQUIPMENT,38
+IBM,51143,3570.0,Computer & office Equipment,operating,NY,COMPUTER & OFFICE EQUIPMENT,38
+DELL,1571996,3571.0,Electronic Computers,operating,DE,ELECTRONIC COMPUTERS,58
+PSTG,1474432,3572.0,Computer Storage Devices,operating,DE,COMPUTER STORAGE DEVICES,40
+ANET,1596532,3576.0,Computer Communications Equipment,operating,DE,COMPUTER COMMUNICATIONS EQUIPMENT,39
+ATEN,1580808,3576.0,Computer Communications Equipment,operating,DE,COMPUTER COMMUNICATIONS EQUIPMENT,39
+JNPR,1043604,3576.0,Computer Communications Equipment,operating,DE,COMPUTER COMMUNICATIONS EQUIPMENT,39
+DBD,28823,3578.0,Calculating & Accounting Machines (No Electronic Computers),operating,DE,CALCULATING & ACCOUNTING MACHINES (NO ELECTRONIC COMPUTERS),25
+VYX,70866,3578.0,Calculating & Accounting Machines (No Electronic Computers),operating,MD,CALCULATING & ACCOUNTING MACHINES (NO ELECTRONIC COMPUTERS),25
+PBI,78814,3579.0,"Office Machines, NEC",operating,DE,"OFFICE MACHINES, NEC",142
+SXI,310354,3580.0,Refrigeration & Service Industry Machinery,operating,DE,REFRIGERATION & SERVICE INDUSTRY MACHINERY,175
+TNC,97134,3580.0,Refrigeration & Service Industry Machinery,operating,MN,REFRIGERATION & SERVICE INDUSTRY MACHINERY,175
+JCI,833444,3585.0,Air-Cond & Warm Air Heatg Equip & Comm & Indl Refrig Equip,operating,L2,AIR-COND & WARM AIR HEATG EQUIP & COMM & INDL REFRIG EQUIP,8
+LII,1069202,3585.0,Air-Cond & Warm Air Heatg Equip & Comm & Indl Refrig Equip,operating,DE,AIR-COND & WARM AIR HEATG EQUIP & COMM & INDL REFRIG EQUIP,8
+CW,26324,3590.0,Misc Industrial & Commercial Machinery & Equipment,operating,DE,MISC INDUSTRIAL & COMMERCIAL MACHINERY & EQUIPMENT,120
+EPAC,6955,3590.0,Misc Industrial & Commercial Machinery & Equipment,operating,WI,MISC INDUSTRIAL & COMMERCIAL MACHINERY & EQUIPMENT,120
+ETN,1551182,3590.0,Misc Industrial & Commercial Machinery & Equipment,operating,,MISC INDUSTRIAL & COMMERCIAL MACHINERY & EQUIPMENT,120
+MOGa,67887,3590.0,Misc Industrial & Commercial Machinery & Equipment,operating,NY,MISC INDUSTRIAL & COMMERCIAL MACHINERY & EQUIPMENT,120
+EMR,32604,3600.0,Electronic & Other Electrical Equipment (No Computer Equip),operating,MO,ELECTRONIC & OTHER ELECTRICAL EQUIPMENT (NO COMPUTER EQUIP),56
+GE,40545,3600.0,Electronic & Other Electrical Equipment (No Computer Equip),operating,NY,ELECTRONIC & OTHER ELECTRICAL EQUIPMENT (NO COMPUTER EQUIP),56
+EAF,931148,3620.0,Electrical Industrial Apparatus,operating,,ELECTRICAL INDUSTRIAL APPARATUS,53
+THR,1489096,3620.0,Electrical Industrial Apparatus,operating,DE,ELECTRICAL INDUSTRIAL APPARATUS,53
+GNRC,1474735,3621.0,Motors & Generators,operating,DE,MOTORS & GENERATORS,135
+AOS,91142,3630.0,Household Appliances,operating,DE,HOUSEHOLD APPLIANCES,88
+WHR,106640,3630.0,Household Appliances,operating,DE,HOUSEHOLD APPLIANCES,88
+AYI,1144215,3640.0,Electric Lighting & Wiring Equipment,operating,DE,ELECTRIC LIGHTING & WIRING EQUIPMENT,51
+KN,1587523,3651.0,Household Audio & Video Equipment,operating,DE,HOUSEHOLD AUDIO & VIDEO EQUIPMENT,89
+CIEN,936395,3661.0,Telephone & Telegraph Apparatus,operating,MD,TELEPHONE & TELEGRAPH APPARATUS,254
+FN,1408710,3661.0,Telephone & Telegraph Apparatus,operating,E9,TELEPHONE & TELEGRAPH APPARATUS,254
+MSI,68505,3663.0,Radio & Tv Broadcasting & Communications Equipment,operating,DE,RADIO & TV BROADCASTING & COMMUNICATIONS EQUIPMENT,168
+ESE,866706,3669.0,"Communications Equipment, NEC",operating,MO,"COMMUNICATIONS EQUIPMENT, NEC",36
+HUBB,48898,3670.0,Electronic Components & Accessories,operating,CT,ELECTRONIC COMPONENTS & ACCESSORIES,57
+VPG,1487952,3670.0,Electronic Components & Accessories,operating,DE,ELECTRONIC COMPONENTS & ACCESSORIES,57
+VSH,103730,3670.0,Electronic Components & Accessories,operating,DE,ELECTRONIC COMPONENTS & ACCESSORIES,57
+BHE,863436,3672.0,Printed Circuit Boards,operating,TX,PRINTED CIRCUIT BOARDS,166
+CTS,26058,3672.0,Printed Circuit Boards,operating,IN,PRINTED CIRCUIT BOARDS,166
+JBL,898293,3672.0,Printed Circuit Boards,operating,DE,PRINTED CIRCUIT BOARDS,166
+WOLF,895419,3674.0,Semiconductors & Related Devices,operating,DE,SEMICONDUCTORS & RELATED DEVICES,205
+APH,820313,3678.0,Electronic Connectors,operating,DE,ELECTRONIC CONNECTORS,59
+MEI,65270,3678.0,Electronic Connectors,operating,DE,ELECTRONIC CONNECTORS,59
+ATKR,1666138,3690.0,"Miscellaneous Electrical Machinery, Equipment & Supplies",operating,DE,"MISCELLANEOUS ELECTRICAL MACHINERY, EQUIPMENT & SUPPLIES",122
+ENR,1632790,3690.0,"Miscellaneous Electrical Machinery, Equipment & Supplies",operating,MO,"MISCELLANEOUS ELECTRICAL MACHINERY, EQUIPMENT & SUPPLIES",122
+ENS,1289308,3690.0,"Miscellaneous Electrical Machinery, Equipment & Supplies",operating,DE,"MISCELLANEOUS ELECTRICAL MACHINERY, EQUIPMENT & SUPPLIES",122
+SPB,109177,3690.0,"Miscellaneous Electrical Machinery, Equipment & Supplies",operating,DE,"MISCELLANEOUS ELECTRICAL MACHINERY, EQUIPMENT & SUPPLIES",122
+F,37996,3711.0,Motor Vehicles & Passenger Car Bodies,operating,DE,MOTOR VEHICLES & PASSENGER CAR BODIES,133
+FSS,277509,3711.0,Motor Vehicles & Passenger Car Bodies,operating,DE,MOTOR VEHICLES & PASSENGER CAR BODIES,133
+GM,1467858,3711.0,Motor Vehicles & Passenger Car Bodies,operating,,MOTOR VEHICLES & PASSENGER CAR BODIES,133
+OSK,775158,3711.0,Motor Vehicles & Passenger Car Bodies,operating,WI,MOTOR VEHICLES & PASSENGER CAR BODIES,133
+REVG,1687221,3711.0,Motor Vehicles & Passenger Car Bodies,operating,DE,MOTOR VEHICLES & PASSENGER CAR BODIES,133
+ADNT,1670541,3714.0,Motor Vehicle Parts & Accessories,operating,L2,MOTOR VEHICLE PARTS & ACCESSORIES,132
+ALSN,1411207,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+ALV,1034670,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+APTV,1521332,3714.0,Motor Vehicle Parts & Accessories,operating,Y9,MOTOR VEHICLE PARTS & ACCESSORIES,132
+AXL,1062231,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+BWA,908255,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+CPS,1320461,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+DAN,26780,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+LCII,763744,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+LEA,842162,3714.0,Motor Vehicle Parts & Accessories,operating,DE,MOTOR VEHICLE PARTS & ACCESSORIES,132
+MOD,67347,3714.0,Motor Vehicle Parts & Accessories,operating,WI,MOTOR VEHICLE PARTS & ACCESSORIES,132
+SMP,93389,3714.0,Motor Vehicle Parts & Accessories,operating,NY,MOTOR VEHICLE PARTS & ACCESSORIES,132
+SRI,1043337,3714.0,Motor Vehicle Parts & Accessories,operating,OH,MOTOR VEHICLE PARTS & ACCESSORIES,132
+WNC,879526,3715.0,Truck Trailers,operating,DE,TRUCK TRAILERS,261
+THO,730263,3716.0,Motor Homes,operating,DE,MOTOR HOMES,131
+WGO,107687,3716.0,Motor Homes,operating,MN,MOTOR HOMES,131
+AIR,1750,3720.0,Aircraft & Parts,operating,DE,AIRCRAFT & PARTS,10
+TXT,217346,3720.0,Aircraft & Parts,operating,DE,AIRCRAFT & PARTS,10
+TGI,1021162,3720.0,Aircraft & Parts,operating,DE,AIRCRAFT & PARTS,10
+BA,12927,3721.0,Aircraft,operating,DE,AIRCRAFT,9
+HEI,46619,3724.0,Aircraft Engines & Engine Parts,operating,FL,AIRCRAFT ENGINES & ENGINE PARTS,11
+RTX,101829,3724.0,Aircraft Engines & Engine Parts,operating,DE,AIRCRAFT ENGINES & ENGINE PARTS,11
+DCO,30305,3728.0,"Aircraft Parts & Auxiliary Equipment, NEC",operating,DE,"AIRCRAFT PARTS & AUXILIARY EQUIPMENT, NEC",12
+PKE,76267,3728.0,"Aircraft Parts & Auxiliary Equipment, NEC",operating,NY,"AIRCRAFT PARTS & AUXILIARY EQUIPMENT, NEC",12
+SPR,1364885,3728.0,"Aircraft Parts & Auxiliary Equipment, NEC",operating,DE,"AIRCRAFT PARTS & AUXILIARY EQUIPMENT, NEC",12
+TDG,1260221,3728.0,"Aircraft Parts & Auxiliary Equipment, NEC",operating,DE,"AIRCRAFT PARTS & AUXILIARY EQUIPMENT, NEC",12
+GD,40533,3730.0,Ship & Boat Building & Repairing,operating,DE,SHIP & BOAT BUILDING & REPAIRING,241
+HII,1501585,3730.0,Ship & Boat Building & Repairing,operating,DE,SHIP & BOAT BUILDING & REPAIRING,241
+MPX,1129155,3730.0,Ship & Boat Building & Repairing,operating,DE,SHIP & BOAT BUILDING & REPAIRING,241
+GBX,923120,3743.0,Railroad Equipment,operating,OR,RAILROAD EQUIPMENT,169
+TRN,99780,3743.0,Railroad Equipment,operating,DE,RAILROAD EQUIPMENT,169
+WAB,943452,3743.0,Railroad Equipment,operating,DE,RAILROAD EQUIPMENT,169
+HOG,793952,3751.0,"Motorcycles, Bicycles & Parts",operating,WI,"MOTORCYCLES, BICYCLES & PARTS",134
+LMT,936468,3760.0,Guided Missiles & Space Vehicles & Parts,operating,MD,GUIDED MISSILES & SPACE VEHICLES & PARTS,80
+PII,931015,3790.0,Miscellaneous Transportation Equipment,operating,DE,MISCELLANEOUS TRANSPORTATION EQUIPMENT,128
+GRMN,1121788,3812.0,"Search, Detection, Navigation, Guidance, Aeronautical Sys",operating,V8,"SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL SYS",202
+LHX,202058,3812.0,"Search, Detection, Navigation, Guidance, Aeronautical Sys",operating,DE,"SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL SYS",202
+NOC,1133421,3812.0,"Search, Detection, Navigation, Guidance, Aeronautical Sys",operating,,"SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL SYS",202
+TDY,1094285,3812.0,"Search, Detection, Navigation, Guidance, Aeronautical Sys",operating,DE,"SEARCH, DETECTION, NAVIGATION, GUIDANCE, AERONAUTICAL SYS",202
+TT,1466258,3822.0,Auto Controls For Regulating Residential & Comml Environments,operating,L2,AUTO CONTROLS FOR REGULATING RESIDENTIAL & COMML ENVIRONMENTS,15
+AME,1037868,3823.0,"Industrial Instruments For Measurement, Display, and Control",operating,DE,"INDUSTRIAL INSTRUMENTS FOR MEASUREMENT, DISPLAY, AND CONTROL",93
+DHR,313616,3823.0,"Industrial Instruments For Measurement, Display, and Control",operating,DE,"INDUSTRIAL INSTRUMENTS FOR MEASUREMENT, DISPLAY, AND CONTROL",93
+FTV,1659166,3823.0,"Industrial Instruments For Measurement, Display, and Control",operating,DE,"INDUSTRIAL INSTRUMENTS FOR MEASUREMENT, DISPLAY, AND CONTROL",93
+KEYS,1601046,3823.0,"Industrial Instruments For Measurement, Display, and Control",operating,DE,"INDUSTRIAL INSTRUMENTS FOR MEASUREMENT, DISPLAY, AND CONTROL",93
+ST,1477294,3823.0,"Industrial Instruments For Measurement, Display, and Control",operating,,"INDUSTRIAL INSTRUMENTS FOR MEASUREMENT, DISPLAY, AND CONTROL",93
+BMI,9092,3824.0,Totalizing Fluid Meters & Counting Devices,operating,WI,TOTALIZING FLUID METERS & COUNTING DEVICES,259
+A,1090872,3826.0,Laboratory Analytical Instruments,operating,DE,LABORATORY ANALYTICAL INSTRUMENTS,100
+BIO,12208,3826.0,Laboratory Analytical Instruments,operating,DE,LABORATORY ANALYTICAL INSTRUMENTS,100
+MTD,1037646,3826.0,Laboratory Analytical Instruments,operating,DE,LABORATORY ANALYTICAL INSTRUMENTS,100
+RVTY,31791,3826.0,Laboratory Analytical Instruments,operating,MA,LABORATORY ANALYTICAL INSTRUMENTS,100
+WAT,1000697,3826.0,Laboratory Analytical Instruments,operating,DE,LABORATORY ANALYTICAL INSTRUMENTS,100
+COHR,820318,3827.0,Optical Instruments & Lenses,operating,PA,OPTICAL INSTRUMENTS & LENSES,147
+ONTO,704532,3829.0,"Measuring & Controlling Devices, NEC",operating,DE,"MEASURING & CONTROLLING DEVICES, NEC",108
+ROK,1024478,3829.0,"Measuring & Controlling Devices, NEC",operating,DE,"MEASURING & CONTROLLING DEVICES, NEC",108
+TMO,97745,3829.0,"Measuring & Controlling Devices, NEC",operating,DE,"MEASURING & CONTROLLING DEVICES, NEC",108
+AORT,784199,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+BAX,10456,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+BDX,10795,3841.0,Surgical & Medical Instruments & Apparatus,operating,NJ,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+BSX,885725,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+GKOS,1192448,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+HAE,313143,3841.0,Surgical & Medical Instruments & Apparatus,operating,MA,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+INSP,1609550,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+MMM,66740,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+RMD,943819,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+SYK,310764,3841.0,Surgical & Medical Instruments & Apparatus,operating,MI,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+TFX,96943,3841.0,Surgical & Medical Instruments & Apparatus,operating,DE,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+WST,105770,3841.0,Surgical & Medical Instruments & Apparatus,operating,PA,SURGICAL & MEDICAL INSTRUMENTS & APPARATUS,253
+AVNS,1606498,3842.0,"Orthopedic, Prosthetic & Surgical Appliances & Supplies",operating,DE,"ORTHOPEDIC, PROSTHETIC & SURGICAL APPLIANCES & SUPPLIES",148
+ENOV,1420800,3842.0,"Orthopedic, Prosthetic & Surgical Appliances & Supplies",operating,DE,"ORTHOPEDIC, PROSTHETIC & SURGICAL APPLIANCES & SUPPLIES",148
+EW,1099800,3842.0,"Orthopedic, Prosthetic & Surgical Appliances & Supplies",operating,DE,"ORTHOPEDIC, PROSTHETIC & SURGICAL APPLIANCES & SUPPLIES",148
+MSA,66570,3842.0,"Orthopedic, Prosthetic & Surgical Appliances & Supplies",operating,,"ORTHOPEDIC, PROSTHETIC & SURGICAL APPLIANCES & SUPPLIES",148
+ZBH,1136869,3842.0,"Orthopedic, Prosthetic & Surgical Appliances & Supplies",operating,DE,"ORTHOPEDIC, PROSTHETIC & SURGICAL APPLIANCES & SUPPLIES",148
+CNMD,816956,3845.0,Electromedical & Electrotherapeutic Apparatus,operating,DE,ELECTROMEDICAL & ELECTROTHERAPEUTIC APPARATUS,55
+MDT,1613103,3845.0,Electromedical & Electrotherapeutic Apparatus,operating,,ELECTROMEDICAL & ELECTROTHERAPEUTIC APPARATUS,55
+IMAX,921582,3861.0,Photographic Equipment & Supplies,operating,A6,PHOTOGRAPHIC EQUIPMENT & SUPPLIES,158
+KODK,31235,3861.0,Photographic Equipment & Supplies,operating,NJ,PHOTOGRAPHIC EQUIPMENT & SUPPLIES,158
+MOV,72573,3873.0,"Watches, Clocks, Clockwork Operated Devices/Parts",operating,NY,"WATCHES, CLOCKS, CLOCKWORK OPERATED DEVICES/PARTS",265
+MODG,837465,3949.0,"Sporting & Athletic Goods, NEC",operating,DE,"SPORTING & ATHLETIC GOODS, NEC",246
+AMCR,1748790,3990.0,Miscellaneous Manufacturing Industries,operating,Y9,MISCELLANEOUS MANUFACTURING INDUSTRIES,125
+BRC,746598,3990.0,Miscellaneous Manufacturing Industries,operating,WI,MISCELLANEOUS MANUFACTURING INDUSTRIES,125
+ODC,74046,3990.0,Miscellaneous Manufacturing Industries,operating,DE,MISCELLANEOUS MANUFACTURING INDUSTRIES,125
+NSC,702165,4011.0,"Railroads, Line-Haul Operating",operating,VA,"RAILROADS, LINE-HAUL OPERATING",170
+UNP,100885,4011.0,"Railroads, Line-Haul Operating",operating,UT,"RAILROADS, LINE-HAUL OPERATING",170
+UPS,1090727,4210.0,Trucking & Courier Services (No Air),operating,DE,TRUCKING & COURIER SERVICES (NO AIR),262
+KNX,1492691,4213.0,Trucking (No Local),operating,,TRUCKING (NO LOCAL),263
+SNDR,1692063,4213.0,Trucking (No Local),operating,WI,TRUCKING (NO LOCAL),263
+BIP,1406234,4400.0,Water Transportation,other,D0,WATER TRANSPORTATION,267
+CCL,815097,4400.0,Water Transportation,operating,R1,WATER TRANSPORTATION,267
+INSW,1679049,4400.0,Water Transportation,operating,1T,WATER TRANSPORTATION,267
+KEX,56047,4400.0,Water Transportation,operating,NV,WATER TRANSPORTATION,267
+MATX,3453,4400.0,Water Transportation,operating,HI,WATER TRANSPORTATION,267
+NAT,1000177,4400.0,Water Transportation,other,,WATER TRANSPORTATION,267
+NCLH,1513761,4400.0,Water Transportation,operating,D0,WATER TRANSPORTATION,267
+RCL,884887,4400.0,Water Transportation,operating,,WATER TRANSPORTATION,267
+TDW,98222,4400.0,Water Transportation,operating,DE,WATER TRANSPORTATION,267
+TNK,1419945,4400.0,Water Transportation,other,D0,WATER TRANSPORTATION,267
+ASC,1577437,4412.0,Deep Sea Foreign Transportation of  Freight,other,1T,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+CMRE,1503584,4412.0,Deep Sea Foreign Transportation of  Freight,other,1T,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+DHT,1331284,4412.0,Deep Sea Foreign Transportation of  Freight,other,1T,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+FRO,913290,4412.0,Deep Sea Foreign Transportation of  Freight,other,,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+GNK,1326200,4412.0,Deep Sea Foreign Transportation of  Freight,operating,1T,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+LPG,1596993,4412.0,Deep Sea Foreign Transportation of  Freight,operating,1T,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+SFL,1289877,4412.0,Deep Sea Foreign Transportation of  Freight,other,,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+STNG,1483934,4412.0,Deep Sea Foreign Transportation of  Freight,other,,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+TK,911971,4412.0,Deep Sea Foreign Transportation of  Freight,other,D0,DEEP SEA FOREIGN TRANSPORTATION OF  FREIGHT,47
+ALK,766421,4512.0,"Air Transportation, Scheduled",operating,DE,"AIR TRANSPORTATION, SCHEDULED",7
+CPA,1345105,4512.0,"Air Transportation, Scheduled",other,R1,"AIR TRANSPORTATION, SCHEDULED",7
+DAL,27904,4512.0,"Air Transportation, Scheduled",operating,DE,"AIR TRANSPORTATION, SCHEDULED",7
+LUV,92380,4512.0,"Air Transportation, Scheduled",operating,TX,"AIR TRANSPORTATION, SCHEDULED",7
+FDX,1048911,4513.0,Air Courier Services,operating,DE,AIR COURIER SERVICES,6
+DINO,1915657,4610.0,Pipe Lines (No Natural Gas),operating,DE,PIPE LINES (NO NATURAL GAS),159
+GATX,40211,4700.0,Transportation Services,operating,NY,TRANSPORTATION SERVICES,260
+SPCE,1706946,4700.0,Transportation Services,operating,,TRANSPORTATION SERVICES,260
+XPO,1166003,4700.0,Transportation Services,operating,,TRANSPORTATION SERVICES,260
+BCO,78890,4731.0,Arrangement of  Transportation of  Freight & Cargo,operating,VA,ARRANGEMENT OF  TRANSPORTATION OF  FREIGHT & CARGO,14
+EXPD,746515,4731.0,Arrangement of  Transportation of  Freight & Cargo,operating,WA,ARRANGEMENT OF  TRANSPORTATION OF  FREIGHT & CARGO,14
+LUMN,18926,4813.0,Telephone Communications (No Radiotelephone),operating,LA,TELEPHONE COMMUNICATIONS (NO RADIOTELEPHONE),255
+T,732717,4813.0,Telephone Communications (No Radiotelephone),operating,DE,TELEPHONE COMMUNICATIONS (NO RADIOTELEPHONE),255
+VZ,732712,4813.0,Telephone Communications (No Radiotelephone),operating,DE,TELEPHONE COMMUNICATIONS (NO RADIOTELEPHONE),255
+GTN,43196,4833.0,Television Broadcasting Stations,operating,GA,TELEVISION BROADCASTING STATIONS,256
+TGNA,39899,4833.0,Television Broadcasting Stations,operating,DE,TELEVISION BROADCASTING STATIONS,256
+CABO,1632127,4841.0,Cable & Other Pay Television Services,operating,DE,CABLE & OTHER PAY TELEVISION SERVICES,24
+CALX,1406666,4899.0,"Communications Services, NEC",operating,,"COMMUNICATIONS SERVICES, NEC",37
+BKH,1130464,4911.0,Electric Services,operating,SD,ELECTRIC SERVICES,52
+CNP,1130310,4911.0,Electric Services,operating,TX,ELECTRIC SERVICES,52
+D,715957,4911.0,Electric Services,operating,VA,ELECTRIC SERVICES,52
+DTE,936340,4911.0,Electric Services,operating,MI,ELECTRIC SERVICES,52
+EIX,827052,4911.0,Electric Services,operating,CA,ELECTRIC SERVICES,52
+ES,72741,4911.0,Electric Services,operating,MA,ELECTRIC SERVICES,52
+ETR,65984,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+FE,1031296,4911.0,Electric Services,operating,OH,ELECTRIC SERVICES,52
+HE,354707,4911.0,Electric Services,operating,HI,ELECTRIC SERVICES,52
+IDA,1057877,4911.0,Electric Services,operating,ID,ELECTRIC SERVICES,52
+NEE,753308,4911.0,Electric Services,operating,FL,ELECTRIC SERVICES,52
+NRG,1013871,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+OGE,1021635,4911.0,Electric Services,operating,OK,ELECTRIC SERVICES,52
+ORA,1296445,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+PNW,764622,4911.0,Electric Services,operating,AZ,ELECTRIC SERVICES,52
+POR,784977,4911.0,Electric Services,operating,OR,ELECTRIC SERVICES,52
+PPL,922224,4911.0,Electric Services,operating,,ELECTRIC SERVICES,52
+SO,92122,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+TXNM,1108426,4911.0,Electric Services,operating,NM,ELECTRIC SERVICES,52
+VST,1692819,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+CWENa,1567683,4911.0,Electric Services,operating,DE,ELECTRIC SERVICES,52
+AM,1623925,4922.0,Natural Gas Transmission,operating,,NATURAL GAS TRANSMISSION,139
+AROC,1389050,4922.0,Natural Gas Transmission,operating,,NATURAL GAS TRANSMISSION,139
+EPD,1061219,4922.0,Natural Gas Transmission,operating,DE,NATURAL GAS TRANSMISSION,139
+KMI,1506307,4922.0,Natural Gas Transmission,operating,DE,NATURAL GAS TRANSMISSION,139
+TRGP,1389170,4922.0,Natural Gas Transmission,operating,,NATURAL GAS TRANSMISSION,139
+WMB,107263,4922.0,Natural Gas Transmission,operating,DE,NATURAL GAS TRANSMISSION,139
+CPK,19745,4923.0,Natural Gas Transmisison & Distribution,operating,DE,NATURAL GAS TRANSMISISON & DISTRIBUTION,138
+OKE,1039684,4923.0,Natural Gas Transmisison & Distribution,operating,OK,NATURAL GAS TRANSMISISON & DISTRIBUTION,138
+SWX,1692115,4923.0,Natural Gas Transmisison & Distribution,operating,DE,NATURAL GAS TRANSMISISON & DISTRIBUTION,138
+ATO,731802,4924.0,Natural Gas Distribution,operating,TX,NATURAL GAS DISTRIBUTION,137
+LNG,3570,4924.0,Natural Gas Distribution,operating,DE,NATURAL GAS DISTRIBUTION,137
+NFG,70145,4924.0,Natural Gas Distribution,operating,NJ,NATURAL GAS DISTRIBUTION,137
+NJR,356309,4924.0,Natural Gas Distribution,operating,NJ,NATURAL GAS DISTRIBUTION,137
+NWN,1733998,4924.0,Natural Gas Distribution,operating,OR,NATURAL GAS DISTRIBUTION,137
+OGS,1587732,4924.0,Natural Gas Distribution,operating,OK,NATURAL GAS DISTRIBUTION,137
+SR,1126956,4924.0,Natural Gas Distribution,operating,MO,NATURAL GAS DISTRIBUTION,137
+AEE,1002910,4931.0,Electric & Other Services Combined,operating,MO,ELECTRIC & OTHER SERVICES COMBINED,50
+ALE,66756,4931.0,Electric & Other Services Combined,operating,MN,ELECTRIC & OTHER SERVICES COMBINED,50
+AVA,104918,4931.0,Electric & Other Services Combined,operating,WA,ELECTRIC & OTHER SERVICES COMBINED,50
+CMS,811156,4931.0,Electric & Other Services Combined,operating,MI,ELECTRIC & OTHER SERVICES COMBINED,50
+DUK,1326160,4931.0,Electric & Other Services Combined,operating,DE,ELECTRIC & OTHER SERVICES COMBINED,50
+ED,1047862,4931.0,Electric & Other Services Combined,operating,NY,ELECTRIC & OTHER SERVICES COMBINED,50
+GNE,1528356,4931.0,Electric & Other Services Combined,operating,DE,ELECTRIC & OTHER SERVICES COMBINED,50
+NI,1111711,4931.0,Electric & Other Services Combined,operating,DE,ELECTRIC & OTHER SERVICES COMBINED,50
+PCG,1004980,4931.0,Electric & Other Services Combined,operating,CA,ELECTRIC & OTHER SERVICES COMBINED,50
+PEG,788784,4931.0,Electric & Other Services Combined,operating,NJ,ELECTRIC & OTHER SERVICES COMBINED,50
+UTL,755001,4931.0,Electric & Other Services Combined,operating,NH,ELECTRIC & OTHER SERVICES COMBINED,50
+WEC,783325,4931.0,Electric & Other Services Combined,operating,WI,ELECTRIC & OTHER SERVICES COMBINED,50
+SRE,1032208,4932.0,Gas & Other Services Combined,operating,CA,GAS & OTHER SERVICES COMBINED,71
+UGI,884614,4932.0,Gas & Other Services Combined,operating,PA,GAS & OTHER SERVICES COMBINED,71
+AWK,1410636,4941.0,Water Supply,operating,DE,WATER SUPPLY,266
+AWR,1056903,4941.0,Water Supply,operating,CA,WATER SUPPLY,266
+CWT,1035201,4941.0,Water Supply,operating,DE,WATER SUPPLY,266
+WTRG,78128,4941.0,Water Supply,operating,PA,WATER SUPPLY,266
+RSG,1060391,4953.0,Refuse Systems,operating,DE,REFUSE SYSTEMS,176
+WM,823768,4953.0,Refuse Systems,operating,DE,REFUSE SYSTEMS,176
+CLH,822818,4955.0,Hazardous Waste Management,operating,MA,HAZARDOUS WASTE MANAGEMENT,81
+AES,874761,4991.0,Cogeneration Services & Small Power Producers,operating,DE,COGENERATION SERVICES & SMALL POWER PRODUCERS,33
+GWW,277135,5000.0,Wholesale-Durable Goods,operating,IL,WHOLESALE-DURABLE GOODS,272
+GPC,40987,5013.0,Wholesale-Motor Vehicle Supplies & New Parts,operating,GA,WHOLESALE-MOTOR VEHICLE SUPPLIES & NEW PARTS,285
+ASPN,1145986,5030.0,Wholesale-Lumber & Other Construction Materials,operating,DE,WHOLESALE-LUMBER & OTHER CONSTRUCTION MATERIALS,280
+BCC,1328581,5030.0,Wholesale-Lumber & Other Construction Materials,operating,ID,WHOLESALE-LUMBER & OTHER CONSTRUCTION MATERIALS,280
+GMS,1600438,5030.0,Wholesale-Lumber & Other Construction Materials,operating,DE,WHOLESALE-LUMBER & OTHER CONSTRUCTION MATERIALS,280
+BXC,1301787,5031.0,"Wholesale-Lumber, Plywood, Millwork & Wood Panels",operating,DE,"WHOLESALE-LUMBER, PLYWOOD, MILLWORK & WOOD PANELS",281
+SITE,1650729,5040.0,Wholesale-Professional & Commercial Equipment & Supplies,operating,DE,WHOLESALE-PROFESSIONAL & COMMERCIAL EQUIPMENT & SUPPLIES,287
+SNX,1177394,5045.0,Wholesale-Computers & Peripheral Equipment & Software,operating,DE,WHOLESALE-COMPUTERS & PERIPHERAL EQUIPMENT & SOFTWARE,270
+OMI,75252,5047.0,"Wholesale-Medical, Dental & Hospital Equipment & Supplies",operating,VA,"WHOLESALE-MEDICAL, DENTAL & HOSPITAL EQUIPMENT & SUPPLIES",283
+RS,861884,5051.0,Wholesale-Metals Service Centers & of fices,operating,DE,WHOLESALE-METALS SERVICE CENTERS & OF FICES,284
+WCC,929008,5063.0,"Wholesale-Electrical Apparatus & Equipment, Wiring Supplies ",operating,,"WHOLESALE-ELECTRICAL APPARATUS & EQUIPMENT, WIRING SUPPLIES",273
+ARW,7536,5065.0,"Wholesale-Electronic Parts & Equipment, NEC",operating,NY,"WHOLESALE-ELECTRONIC PARTS & EQUIPMENT, NEC",274
+TEL,1385157,5065.0,"Wholesale-Electronic Parts & Equipment, NEC",operating,,"WHOLESALE-ELECTRONIC PARTS & EQUIPMENT, NEC",274
+FERG,2011641,5070.0,Wholesale-Hardware & Plumbing & Heating Equipment & Supplies,operating,DE,WHOLESALE-HARDWARE & PLUMBING & HEATING EQUIPMENT & SUPPLIES,278
+WSO,105016,5070.0,Wholesale-Hardware & Plumbing & Heating Equipment & Supplies,operating,FL,WHOLESALE-HARDWARE & PLUMBING & HEATING EQUIPMENT & SUPPLIES,278
+AIT,109563,5080.0,"Wholesale-Machinery, Equipment & Supplies",operating,OH,"WHOLESALE-MACHINERY, EQUIPMENT & SUPPLIES",282
+GIC,945114,5084.0,Wholesale-Industrial Machinery & Equipment,operating,DE,WHOLESALE-INDUSTRIAL MACHINERY & EQUIPMENT,279
+MRC,1439095,5084.0,Wholesale-Industrial Machinery & Equipment,operating,DE,WHOLESALE-INDUSTRIAL MACHINERY & EQUIPMENT,279
+MSM,1003078,5084.0,Wholesale-Industrial Machinery & Equipment,operating,NY,WHOLESALE-INDUSTRIAL MACHINERY & EQUIPMENT,279
+CAH,721371,5122.0,"Wholesale-Drugs, Proprietaries & Druggists' Sundries",operating,OH,"WHOLESALE-DRUGS, PROPRIETARIES & DRUGGISTS' SUNDRIES",271
+COR,1140859,5122.0,"Wholesale-Drugs, Proprietaries & Druggists' Sundries",operating,DE,"WHOLESALE-DRUGS, PROPRIETARIES & DRUGGISTS' SUNDRIES",271
+HLF,1180262,5122.0,"Wholesale-Drugs, Proprietaries & Druggists' Sundries",operating,E9,"WHOLESALE-DRUGS, PROPRIETARIES & DRUGGISTS' SUNDRIES",271
+MCK,927653,5122.0,"Wholesale-Drugs, Proprietaries & Druggists' Sundries",operating,DE,"WHOLESALE-DRUGS, PROPRIETARIES & DRUGGISTS' SUNDRIES",271
+NUS,1021561,5122.0,"Wholesale-Drugs, Proprietaries & Druggists' Sundries",operating,DE,"WHOLESALE-DRUGS, PROPRIETARIES & DRUGGISTS' SUNDRIES",271
+SYY,96021,5140.0,Wholesale-Groceries & Related Products,operating,DE,WHOLESALE-GROCERIES & RELATED PRODUCTS,276
+USFD,1665918,5140.0,Wholesale-Groceries & Related Products,operating,IL,WHOLESALE-GROCERIES & RELATED PRODUCTS,276
+PFGC,1618673,5141.0,"Wholesale-Groceries, General Line",operating,DE,"WHOLESALE-GROCERIES, GENERAL LINE",277
+UNFI,1020859,5141.0,"Wholesale-Groceries, General Line",operating,DE,"WHOLESALE-GROCERIES, GENERAL LINE",277
+UVV,102037,5150.0,Wholesale-Farm Product Raw Materials,operating,VA,WHOLESALE-FARM PRODUCT RAW MATERIALS,275
+ASH,1674862,5160.0,Wholesale-Chemicals & Allied Products,operating,DE,WHOLESALE-CHEMICALS & ALLIED PRODUCTS,269
+WKC,789460,5172.0,Wholesale-Petroleum & Petroleum Products (No Bulk Stations),operating,FL,WHOLESALE-PETROLEUM & PETROLEUM PRODUCTS (NO BULK STATIONS),286
+SHW,89800,5200.0,"Retail-Building Materials, Hardware, Garden Supply",operating,OH,"RETAIL-BUILDING MATERIALS, HARDWARE, GARDEN SUPPLY",180
+BLDR,1316835,5211.0,Retail-Lumber & Other Building Materials Dealers,operating,DE,RETAIL-LUMBER & OTHER BUILDING MATERIALS DEALERS,192
+FND,1507079,5211.0,Retail-Lumber & Other Building Materials Dealers,operating,DE,RETAIL-LUMBER & OTHER BUILDING MATERIALS DEALERS,192
+HD,354950,5211.0,Retail-Lumber & Other Building Materials Dealers,operating,DE,RETAIL-LUMBER & OTHER BUILDING MATERIALS DEALERS,192
+LOW,60667,5211.0,Retail-Lumber & Other Building Materials Dealers,operating,NC,RETAIL-LUMBER & OTHER BUILDING MATERIALS DEALERS,192
+BURL,1579298,5311.0,Retail-Department Stores,operating,DE,RETAIL-DEPARTMENT STORES,183
+DDS,28917,5311.0,Retail-Department Stores,operating,TX,RETAIL-DEPARTMENT STORES,183
+KSS,885639,5311.0,Retail-Department Stores,operating,WI,RETAIL-DEPARTMENT STORES,183
+M,794367,5311.0,Retail-Department Stores,operating,DE,RETAIL-DEPARTMENT STORES,183
+BJ,1531152,5331.0,Retail-Variety Stores,operating,DE,RETAIL-VARIETY STORES,197
+DG,29534,5331.0,Retail-Variety Stores,operating,TN,RETAIL-VARIETY STORES,197
+TGT,27419,5331.0,Retail-Variety Stores,operating,MN,RETAIL-VARIETY STORES,197
+WMT,104169,5331.0,Retail-Variety Stores,operating,DE,RETAIL-VARIETY STORES,197
+KR,56873,5411.0,Retail-Grocery Stores,operating,OH,RETAIL-GROCERY STORES,189
+NGVC,1547459,5411.0,Retail-Grocery Stores,operating,DE,RETAIL-GROCERY STORES,189
+WMK,105418,5411.0,Retail-Grocery Stores,operating,PA,RETAIL-GROCERY STORES,189
+ABG,1144980,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+AN,350698,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+CWH,1669779,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+GPI,1031203,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+KAR,1395942,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+KMX,1170010,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,VA,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+LAD,1023128,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,OR,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+MUSA,1573516,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+PAG,1019849,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+SAH,1043509,5500.0,Retail-Auto Dealers & Gasoline Stations,operating,DE,RETAIL-AUTO DEALERS & GASOLINE STATIONS,179
+AAP,1158449,5531.0,Retail-Auto & Home Supply Stores,operating,DE,RETAIL-AUTO & HOME SUPPLY STORES,178
+AZO,866787,5531.0,Retail-Auto & Home Supply Stores,operating,NV,RETAIL-AUTO & HOME SUPPLY STORES,178
+HZO,1057060,5531.0,Retail-Auto & Home Supply Stores,operating,DE,RETAIL-AUTO & HOME SUPPLY STORES,178
+HBI,1359841,5600.0,Retail-Apparel & Accessory Stores,operating,MD,RETAIL-APPAREL & ACCESSORY STORES,177
+VNCE,1579157,5600.0,Retail-Apparel & Accessory Stores,operating,DE,RETAIL-APPAREL & ACCESSORY STORES,177
+AEO,919012,5651.0,Retail-Family Clothing Stores,operating,DE,RETAIL-FAMILY CLOTHING STORES,187
+ANF,1018840,5651.0,Retail-Family Clothing Stores,operating,OH,RETAIL-FAMILY CLOTHING STORES,187
+BKE,885245,5651.0,Retail-Family Clothing Stores,operating,NE,RETAIL-FAMILY CLOTHING STORES,187
+GAP,39911,5651.0,Retail-Family Clothing Stores,operating,DE,RETAIL-FAMILY CLOTHING STORES,187
+TJX,109198,5651.0,Retail-Family Clothing Stores,operating,DE,RETAIL-FAMILY CLOTHING STORES,187
+JWN,72333,5651.0,Retail-Family Clothing Stores,operating,WA,RETAIL-FAMILY CLOTHING STORES,187
+BOOT,1610250,5661.0,Retail-Shoe Stores,operating,DE,RETAIL-SHOE STORES,196
+DBI,1319947,5661.0,Retail-Shoe Stores,operating,OH,RETAIL-SHOE STORES,196
+GCO,18498,5661.0,Retail-Shoe Stores,operating,TN,RETAIL-SHOE STORES,196
+FL,850209,5661.0,Retail-Shoe Stores,operating,NY,RETAIL-SHOE STORES,196
+WSM,719955,5700.0,"Retail-Home Furniture, Furnishings & Equipment Stores",operating,DE,"RETAIL-HOME FURNITURE, FURNISHINGS & EQUIPMENT STORES",190
+HVT,216085,5712.0,Retail-Furniture Stores,operating,MD,RETAIL-FURNITURE STORES,188
+RH,1528849,5712.0,Retail-Furniture Stores,operating,DE,RETAIL-FURNITURE STORES,188
+BBY,764478,5731.0,"Retail-Radio, Tv & Consumer Electronics Stores",operating,MN,"RETAIL-RADIO, TV & CONSUMER ELECTRONICS STORES",194
+GME,1326380,5734.0,Retail-Computer & Computer Software Stores,operating,DE,RETAIL-COMPUTER & COMPUTER SOFTWARE STORES,182
+CNNE,1704720,5810.0,Retail-Eating & Drinking Places,operating,DE,RETAIL-EATING & DRINKING PLACES,186
+SHAK,1620533,5810.0,Retail-Eating & Drinking Places,operating,,RETAIL-EATING & DRINKING PLACES,186
+ARCO,1508478,5812.0,Retail-Eating  Places,other,,RETAIL-EATING  PLACES,185
+ARMK,1584509,5812.0,Retail-Eating  Places,operating,DE,RETAIL-EATING  PLACES,185
+CMG,1058090,5812.0,Retail-Eating  Places,operating,,RETAIL-EATING  PLACES,185
+DIN,49754,5812.0,Retail-Eating  Places,operating,DE,RETAIL-EATING  PLACES,185
+DRI,940944,5812.0,Retail-Eating  Places,operating,FL,RETAIL-EATING  PLACES,185
+EAT,703351,5812.0,Retail-Eating  Places,operating,DE,RETAIL-EATING  PLACES,185
+MCD,63908,5812.0,Retail-Eating  Places,operating,DE,RETAIL-EATING  PLACES,185
+QSR,1618756,5812.0,Retail-Eating  Places,operating,A6,RETAIL-EATING  PLACES,185
+YUM,1041061,5812.0,Retail-Eating  Places,operating,NC,RETAIL-EATING  PLACES,185
+YUMC,1673358,5812.0,Retail-Eating  Places,operating,DE,RETAIL-EATING  PLACES,185
+CVS,64803,5912.0,Retail-Drug Stores and Proprietary Stores,operating,DE,RETAIL-DRUG STORES AND PROPRIETARY STORES,184
+DKS,1089063,5940.0,Retail-Miscellaneous Shopping Goods Stores,operating,DE,RETAIL-MISCELLANEOUS SHOPPING GOODS STORES,193
+SIG,832988,5944.0,Retail-Jewelry Stores,operating,,RETAIL-JEWELRY STORES,191
+VIPS,1529192,5961.0,Retail-Catalog & Mail-Order Houses,other,,RETAIL-CATALOG & MAIL-ORDER HOUSES,181
+W,1616707,5961.0,Retail-Catalog & Mail-Order Houses,operating,,RETAIL-CATALOG & MAIL-ORDER HOUSES,181
+BBWI,701985,5990.0,"Retail-Retail Stores, NEC",operating,DE,"RETAIL-RETAIL STORES, NEC",195
+SBH,1368458,5990.0,"Retail-Retail Stores, NEC",operating,,"RETAIL-RETAIL STORES, NEC",195
+BAC,70858,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+BANC,1169770,6021.0,National Commercial Banks,operating,MD,NATIONAL COMMERCIAL BANKS,136
+C,831001,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+CBU,723188,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+CFR,39263,6021.0,National Commercial Banks,operating,TX,NATIONAL COMMERCIAL BANKS,136
+CMA,28412,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+COF,927628,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+FCF,712537,6021.0,National Commercial Banks,operating,PA,NATIONAL COMMERCIAL BANKS,136
+FHN,36966,6021.0,National Commercial Banks,operating,TN,NATIONAL COMMERCIAL BANKS,136
+FNB,37808,6021.0,National Commercial Banks,operating,PA,NATIONAL COMMERCIAL BANKS,136
+GNTY,1058867,6021.0,National Commercial Banks,operating,TX,NATIONAL COMMERCIAL BANKS,136
+JPM,19617,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+KEY,91576,6021.0,National Commercial Banks,operating,OH,NATIONAL COMMERCIAL BANKS,136
+NBHC,1475841,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+NIC,1174850,6021.0,National Commercial Banks,operating,WI,NATIONAL COMMERCIAL BANKS,136
+PNC,713676,6021.0,National Commercial Banks,operating,PA,NATIONAL COMMERCIAL BANKS,136
+RF,1281761,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+SMBK,1038773,6021.0,National Commercial Banks,operating,TN,NATIONAL COMMERCIAL BANKS,136
+SNV,18349,6021.0,National Commercial Banks,operating,X1,NATIONAL COMMERCIAL BANKS,136
+STEL,1473844,6021.0,National Commercial Banks,operating,TX,NATIONAL COMMERCIAL BANKS,136
+TFC,92230,6021.0,National Commercial Banks,operating,NC,NATIONAL COMMERCIAL BANKS,136
+USB,36104,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+WBS,801337,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+WFC,72971,6021.0,National Commercial Banks,operating,DE,NATIONAL COMMERCIAL BANKS,136
+FBMS,947559,6021.0,National Commercial Banks,operating,MS,NATIONAL COMMERCIAL BANKS,136
+ABCB,351569,6022.0,State Commercial Banks,operating,GA,STATE COMMERCIAL BANKS,247
+ALLY,40729,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+ASB,7789,6022.0,State Commercial Banks,operating,WI,STATE COMMERCIAL BANKS,247
+AUB,883948,6022.0,State Commercial Banks,operating,VA,STATE COMMERCIAL BANKS,247
+BK,1390777,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+BOH,46195,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+CBAN,711669,6022.0,State Commercial Banks,operating,GA,STATE COMMERCIAL BANKS,247
+CFG,759944,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+CPF,701347,6022.0,State Commercial Banks,operating,HI,STATE COMMERCIAL BANKS,247
+CUBI,1488813,6022.0,State Commercial Banks,operating,PA,STATE COMMERCIAL BANKS,247
+EQBK,1227500,6022.0,State Commercial Banks,operating,KS,STATE COMMERCIAL BANKS,247
+FBK,1649749,6022.0,State Commercial Banks,operating,TN,STATE COMMERCIAL BANKS,247
+FFWM,1413837,6022.0,State Commercial Banks,operating,CA,STATE COMMERCIAL BANKS,247
+GBCI,868671,6022.0,State Commercial Banks,operating,MT,STATE COMMERCIAL BANKS,247
+HOMB,1331520,6022.0,State Commercial Banks,operating,AR,STATE COMMERCIAL BANKS,247
+HTH,1265131,6022.0,State Commercial Banks,operating,MD,STATE COMMERCIAL BANKS,247
+LOB,1462120,6022.0,State Commercial Banks,operating,NC,STATE COMMERCIAL BANKS,247
+MCB,1476034,6022.0,State Commercial Banks,operating,NY,STATE COMMERCIAL BANKS,247
+MTB,36270,6022.0,State Commercial Banks,operating,NY,STATE COMMERCIAL BANKS,247
+OFG,1030469,6022.0,State Commercial Banks,operating,PR,STATE COMMERCIAL BANKS,247
+PB,1068851,6022.0,State Commercial Banks,operating,TX,STATE COMMERCIAL BANKS,247
+RNST,715072,6022.0,State Commercial Banks,operating,MS,STATE COMMERCIAL BANKS,247
+SBSI,705432,6022.0,State Commercial Banks,operating,TX,STATE COMMERCIAL BANKS,247
+SFBS,1430723,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+SSB,764038,6022.0,State Commercial Banks,operating,FL,STATE COMMERCIAL BANKS,247
+STT,93751,6022.0,State Commercial Banks,operating,MA,STATE COMMERCIAL BANKS,247
+UCB,857855,6022.0,State Commercial Banks,operating,GA,STATE COMMERCIAL BANKS,247
+WAL,1212545,6022.0,State Commercial Banks,operating,DE,STATE COMMERCIAL BANKS,247
+BAP,1001290,6029.0,"Commercial Banks, NEC",other,,"COMMERCIAL BANKS, NEC",34
+BLX,890541,6029.0,"Commercial Banks, NEC",other,,"COMMERCIAL BANKS, NEC",34
+IFS,1615903,6029.0,"Commercial Banks, NEC",other,,"COMMERCIAL BANKS, NEC",34
+NTB,1653242,6029.0,"Commercial Banks, NEC",other,D0,"COMMERCIAL BANKS, NEC",34
+AX,1299709,6035.0,"Savings Institution, Federally Chartered",operating,DE,"SAVINGS INSTITUTION, FEDERALLY CHARTERED",200
+BKU,1504008,6035.0,"Savings Institution, Federally Chartered",operating,DE,"SAVINGS INSTITUTION, FEDERALLY CHARTERED",200
+HTB,1538263,6035.0,"Savings Institution, Federally Chartered",operating,MD,"SAVINGS INSTITUTION, FEDERALLY CHARTERED",200
+PFS,1178970,6035.0,"Savings Institution, Federally Chartered",operating,DE,"SAVINGS INSTITUTION, FEDERALLY CHARTERED",200
+FLG,910073,6036.0,"Savings Institutions, Not Federally Chartered",operating,,"SAVINGS INSTITUTIONS, NOT FEDERALLY CHARTERED",201
+BHLB,1108134,6036.0,"Savings Institutions, Not Federally Chartered",operating,DE,"SAVINGS INSTITUTIONS, NOT FEDERALLY CHARTERED",201
+AGM,845877,6111.0,Federal & Federally-Sponsored Credit Agencies,operating,,FEDERAL & FEDERALLY-SPONSORED CREDIT AGENCIES,66
+BFH,1101215,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+ENVA,1529864,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+LC,1409970,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+NNI,1258602,6141.0,Personal Credit Institutions,operating,NE,PERSONAL CREDIT INSTITUTIONS,155
+OMF,1584207,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+RM,1519401,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+DFS,1393612,6141.0,Personal Credit Institutions,operating,DE,PERSONAL CREDIT INSTITUTIONS,155
+ONIT,873860,6162.0,Mortgage Bankers & Loan Correspondents,operating,FL,MORTGAGE BANKERS & LOAN CORRESPONDENTS,130
+PFSI,1745916,6162.0,Mortgage Bankers & Loan Correspondents,operating,DE,MORTGAGE BANKERS & LOAN CORRESPONDENTS,130
+AXP,4962,6199.0,Finance Services,operating,NY,FINANCE SERVICES,67
+GDOT,1386278,6199.0,Finance Services,operating,DE,FINANCE SERVICES,67
+SYF,1601712,6199.0,Finance Services,operating,NY,FINANCE SERVICES,67
+WD,1497770,6199.0,Finance Services,operating,MD,FINANCE SERVICES,67
+ICE,1571949,6200.0,"Security & Commodity Brokers, Dealers, Exchanges & Services",operating,DE,"SECURITY & COMMODITY BROKERS, DEALERS, EXCHANGES & SERVICES",203
+BLK,2012383,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+GS,886982,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+JEF,96223,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,NY,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+MS,895421,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+OPY,791963,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+PIPR,1230245,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+RJF,720005,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,FL,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+SCHW,316709,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+SF,720672,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+WT,880631,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+AC,1642122,6211.0,"Security Brokers, Dealers & Flotation Companies",operating,DE,"SECURITY BROKERS, DEALERS & FLOTATION COMPANIES",204
+AAMI,1748824,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+AMG,1004434,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+AMP,820027,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+APAM,1517302,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+APO,1858681,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+BEN,38777,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+CNS,1284812,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+DBRG,1679688,6282.0,Investment Advice,operating,MD,INVESTMENT ADVICE,98
+EVR,1360901,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+FHI,1056288,6282.0,Investment Advice,operating,PA,INVESTMENT ADVICE,98
+HLI,1302215,6282.0,Investment Advice,operating,,INVESTMENT ADVICE,98
+IVZ,914208,6282.0,Investment Advice,operating,D0,INVESTMENT ADVICE,98
+JHG,1274173,6282.0,Investment Advice,operating,Y9,INVESTMENT ADVICE,98
+KKR,1404912,6282.0,Investment Advice,operating,,INVESTMENT ADVICE,98
+LAZ,1311370,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+MC,1596967,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+NOAH,1499543,6282.0,Investment Advice,other,,INVESTMENT ADVICE,98
+PJT,1626115,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+VRTS,883237,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+WHG,1165002,6282.0,Investment Advice,operating,DE,INVESTMENT ADVICE,98
+CIA,24090,6311.0,Life Insurance,operating,CO,LIFE INSURANCE,104
+GL,320335,6311.0,Life Insurance,operating,DE,LIFE INSURANCE,104
+GNW,1276520,6311.0,Life Insurance,operating,DE,LIFE INSURANCE,104
+LNC,59558,6311.0,Life Insurance,operating,IN,LIFE INSURANCE,104
+MET,1099219,6311.0,Life Insurance,operating,DE,LIFE INSURANCE,104
+PRI,1475922,6311.0,Life Insurance,operating,DE,LIFE INSURANCE,104
+PRU,1137774,6311.0,Life Insurance,operating,NJ,LIFE INSURANCE,104
+RGA,898174,6311.0,Life Insurance,operating,MO,LIFE INSURANCE,104
+VOYA,1535929,6311.0,Life Insurance,operating,DE,LIFE INSURANCE,104
+AFL,4977,6321.0,Accident & Health Insurance,operating,GA,ACCIDENT & HEALTH INSURANCE,1
+CNO,1224608,6321.0,Accident & Health Insurance,operating,DE,ACCIDENT & HEALTH INSURANCE,1
+UNM,5513,6321.0,Accident & Health Insurance,operating,DE,ACCIDENT & HEALTH INSURANCE,1
+CI,1739940,6324.0,Hospital & Medical Service Plans,operating,DE,HOSPITAL & MEDICAL SERVICE PLANS,85
+CNC,1071739,6324.0,Hospital & Medical Service Plans,operating,DE,HOSPITAL & MEDICAL SERVICE PLANS,85
+ELV,1156039,6324.0,Hospital & Medical Service Plans,operating,IN,HOSPITAL & MEDICAL SERVICE PLANS,85
+HUM,49071,6324.0,Hospital & Medical Service Plans,operating,DE,HOSPITAL & MEDICAL SERVICE PLANS,85
+MOH,1179929,6324.0,Hospital & Medical Service Plans,operating,DE,HOSPITAL & MEDICAL SERVICE PLANS,85
+UNH,731766,6324.0,Hospital & Medical Service Plans,operating,DE,HOSPITAL & MEDICAL SERVICE PLANS,85
+AFG,1042046,6331.0,"Fire, Marine & Casualty Insurance",operating,OH,"FIRE, MARINE & CASUALTY INSURANCE",68
+AIG,5272,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+ALL,899051,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+AXS,1214816,6331.0,"Fire, Marine & Casualty Insurance",operating,,"FIRE, MARINE & CASUALTY INSURANCE",68
+CB,896159,6331.0,"Fire, Marine & Casualty Insurance",operating,V8,"FIRE, MARINE & CASUALTY INSURANCE",68
+CNA,21175,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+EG,1095073,6331.0,"Fire, Marine & Casualty Insurance",operating,D0,"FIRE, MARINE & CASUALTY INSURANCE",68
+EIG,1379041,6331.0,"Fire, Marine & Casualty Insurance",operating,NV,"FIRE, MARINE & CASUALTY INSURANCE",68
+GBLI,1494904,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+HCI,1400810,6331.0,"Fire, Marine & Casualty Insurance",operating,FL,"FIRE, MARINE & CASUALTY INSURANCE",68
+HIG,874766,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+HMN,850141,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+HRTG,1598665,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+KFS,1072627,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+KMPR,860748,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+KNSL,1669162,6331.0,"Fire, Marine & Casualty Insurance",operating,,"FIRE, MARINE & CASUALTY INSURANCE",68
+L,60086,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+MCY,64996,6331.0,"Fire, Marine & Casualty Insurance",operating,CA,"FIRE, MARINE & CASUALTY INSURANCE",68
+MKL,1096343,6331.0,"Fire, Marine & Casualty Insurance",operating,VA,"FIRE, MARINE & CASUALTY INSURANCE",68
+PGR,80661,6331.0,"Fire, Marine & Casualty Insurance",operating,OH,"FIRE, MARINE & CASUALTY INSURANCE",68
+PRA,1127703,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+RNR,913144,6331.0,"Fire, Marine & Casualty Insurance",operating,D0,"FIRE, MARINE & CASUALTY INSURANCE",68
+SPNT,1576018,6331.0,"Fire, Marine & Casualty Insurance",operating,D0,"FIRE, MARINE & CASUALTY INSURANCE",68
+THG,944695,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+TRV,86312,6331.0,"Fire, Marine & Casualty Insurance",operating,MN,"FIRE, MARINE & CASUALTY INSURANCE",68
+UVE,891166,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+WRB,11544,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+WTM,776867,6331.0,"Fire, Marine & Casualty Insurance",operating,D0,"FIRE, MARINE & CASUALTY INSURANCE",68
+BRKa,1067983,6331.0,"Fire, Marine & Casualty Insurance",operating,DE,"FIRE, MARINE & CASUALTY INSURANCE",68
+AGO,1273813,6351.0,Surety Insurance,operating,D0,SURETY INSURANCE,252
+AMBC,874501,6351.0,Surety Insurance,operating,DE,SURETY INSURANCE,252
+ESNT,1448893,6351.0,Surety Insurance,operating,D0,SURETY INSURANCE,252
+MBI,814585,6351.0,Surety Insurance,operating,CT,SURETY INSURANCE,252
+MTG,876437,6351.0,Surety Insurance,operating,WI,SURETY INSURANCE,252
+ORI,74260,6351.0,Surety Insurance,operating,DE,SURETY INSURANCE,252
+RDN,890926,6351.0,Surety Insurance,operating,DE,SURETY INSURANCE,252
+FAF,1472787,6361.0,Title Insurance,operating,DE,TITLE INSURANCE,258
+FNF,1331875,6361.0,Title Insurance,operating,,TITLE INSURANCE,258
+STC,94344,6361.0,Title Insurance,operating,DE,TITLE INSURANCE,258
+ARGO,1091748,6361.0,Title Insurance,operating,,TITLE INSURANCE,258
+AIZ,1267238,6399.0,"Insurance Carriers, NEC",operating,DE,"INSURANCE CARRIERS, NEC",97
+AJG,354190,6411.0,"Insurance Agents, Brokers & Service",operating,DE,"INSURANCE AGENTS, BROKERS & SERVICE",96
+AON,315293,6411.0,"Insurance Agents, Brokers & Service",operating,L2,"INSURANCE AGENTS, BROKERS & SERVICE",96
+BRO,79282,6411.0,"Insurance Agents, Brokers & Service",operating,FL,"INSURANCE AGENTS, BROKERS & SERVICE",96
+MMC,62709,6411.0,"Insurance Agents, Brokers & Service",operating,DE,"INSURANCE AGENTS, BROKERS & SERVICE",96
+CRDb,25475,6411.0,"Insurance Agents, Brokers & Service",operating,GA,"INSURANCE AGENTS, BROKERS & SERVICE",96
+AHH,1569187,6500.0,Real Estate,operating,MD,REAL ESTATE,171
+CBRE,1138118,6500.0,Real Estate,operating,DE,REAL ESTATE,171
+CWK,1628369,6500.0,Real Estate,operating,Y9,REAL ESTATE,171
+GTY,1052752,6500.0,Real Estate,operating,MD,REAL ESTATE,171
+HPP,1482512,6500.0,Real Estate,operating,MD,REAL ESTATE,171
+IIPR,1677576,6500.0,Real Estate,operating,,REAL ESTATE,171
+KW,1408100,6500.0,Real Estate,operating,DE,REAL ESTATE,171
+SRG,1628063,6500.0,Real Estate,operating,MD,REAL ESTATE,171
+TRC,96869,6500.0,Real Estate,operating,DE,REAL ESTATE,171
+TRNO,1476150,6500.0,Real Estate,operating,,REAL ESTATE,171
+UE,1611547,6500.0,Real Estate,operating,MD,REAL ESTATE,171
+INVH,1687229,6510.0,Real Estate Operators (No Developers) & Lessors,operating,,REAL ESTATE OPERATORS (NO DEVELOPERS) & LESSORS,174
+BN,1001085,6512.0,Opeators of  Nonresidential Buildings,other,A6,OPEATORS OF  NONRESIDENTIAL BUILDINGS,145
+PDM,1042776,6512.0,Opeators of  Nonresidential Buildings,operating,MD,OPEATORS OF  NONRESIDENTIAL BUILDINGS,145
+HOUS,1398987,6531.0,Real Estate Agents & Managers (For Others),operating,DE,REAL ESTATE AGENTS & MANAGERS (FOR OTHERS),172
+JLL,1037976,6531.0,Real Estate Agents & Managers (For Others),operating,MD,REAL ESTATE AGENTS & MANAGERS (FOR OTHERS),172
+MMI,1578732,6531.0,Real Estate Agents & Managers (For Others),operating,,REAL ESTATE AGENTS & MANAGERS (FOR OTHERS),172
+RMAX,1581091,6531.0,Real Estate Agents & Managers (For Others),operating,CO,REAL ESTATE AGENTS & MANAGERS (FOR OTHERS),172
+VAC,1524358,6531.0,Real Estate Agents & Managers (For Others),operating,X1,REAL ESTATE AGENTS & MANAGERS (FOR OTHERS),172
+JOE,745308,6552.0,Land Subdividers & Developers (No Cemeteries),operating,FL,LAND SUBDIVIDERS & DEVELOPERS (NO CEMETERIES),101
+DLB,1308547,6794.0,Patent Owners & Lessors,operating,DE,PATENT OWNERS & LESSORS,153
+AAT,1500217,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ACRE,1529377,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ADC,917251,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+AHT,1232582,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+AIV,922864,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+AKR,899629,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ALEX,1545654,6798.0,Real Estate Investment Trusts,operating,HI,REAL ESTATE INVESTMENT TRUSTS,173
+ALX,3499,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+AMH,1562401,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+AMT,1053507,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+APLE,1418121,6798.0,Real Estate Investment Trusts,operating,VA,REAL ESTATE INVESTMENT TRUSTS,173
+ARE,1035443,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ARI,1467760,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+AVB,915912,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+BDN,790816,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+BFS,907254,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+BRSP,1717547,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+BRX,1581068,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+BXMT,1061630,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+BXP,1037540,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+CBL,910612,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+CCI,1051470,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+CDP,860546,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CHCT,1631569,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CIM,1409493,6798.0,Real Estate Investment Trusts,operating,NY,REAL ESTATE INVESTMENT TRUSTS,173
+CIO,1593222,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+CLDT,1476045,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CLPR,1649096,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+COLD,1455863,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CPT,906345,6798.0,Real Estate Investment Trusts,operating,TX,REAL ESTATE INVESTMENT TRUSTS,173
+CSR,798359,6798.0,Real Estate Investment Trusts,operating,ND,REAL ESTATE INVESTMENT TRUSTS,173
+CTO,23795,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CTRE,1590717,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CUBE,1298675,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+CUZ,25232,6798.0,Real Estate Investment Trusts,operating,GA,REAL ESTATE INVESTMENT TRUSTS,173
+CXW,1070985,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+DEA,1622194,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+DEI,1364250,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+DLR,1297996,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+DOC,765880,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+DRH,1298946,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+EGP,49600,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ELME,104894,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ELS,895417,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+EPR,1045450,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+EQR,906107,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ESRT,1541401,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ESS,920522,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+EXR,1289490,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+FCPT,1650132,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+FR,921825,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+FRT,34903,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+HHH,1981792,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+HIW,921082,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+HR,1360604,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+INN,1497645,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+IRM,1020569,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+IRT,1466085,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+JBGS,1689796,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+KIM,879101,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+KRC,1025996,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+KREF,1631596,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+KRG,1286043,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+LADR,1577670,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+LXP,910108,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+MAA,912595,6798.0,Real Estate Investment Trusts,operating,TN,REAL ESTATE INVESTMENT TRUSTS,173
+MAC,912242,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+MFA,1055160,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+MPW,1287865,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+NLY,1043219,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+NNN,751364,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+NSA,1618563,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+O,726728,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+OHI,888491,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+ORC,1518621,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+OUT,1579877,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+PEB,1474098,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+PGRE,1605607,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+PLD,1045609,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+PLYM,1515816,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+PMT,1464423,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+PSA,1393311,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+REXR,1571283,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+RHP,1040829,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+RLJ,1511337,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+RWT,930236,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+RYN,52827,6798.0,Real Estate Investment Trusts,operating,NC,REAL ESTATE INVESTMENT TRUSTS,173
+SAFE,1095651,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+SITC,894315,6798.0,Real Estate Investment Trusts,operating,OH,REAL ESTATE INVESTMENT TRUSTS,173
+SKT,899715,6798.0,Real Estate Investment Trusts,operating,NC,REAL ESTATE INVESTMENT TRUSTS,173
+SLG,1040971,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+SPG,1063761,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+STAG,1479094,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+STWD,1465128,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+SUI,912593,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+TRTX,1630472,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+TWO,1465740,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+UDR,74208,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+UHT,798783,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+UMH,752642,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+VICI,1705696,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+VNO,899689,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+VRE,924901,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+VTR,740260,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+WELL,766704,6798.0,Real Estate Investment Trusts,operating,DE,REAL ESTATE INVESTMENT TRUSTS,173
+WPC,1025378,6798.0,Real Estate Investment Trusts,operating,MD,REAL ESTATE INVESTMENT TRUSTS,173
+WSR,1175535,6798.0,Real Estate Investment Trusts,operating,TX,REAL ESTATE INVESTMENT TRUSTS,173
+WY,106535,6798.0,Real Estate Investment Trusts,operating,WA,REAL ESTATE INVESTMENT TRUSTS,173
+EQC,803649,6798.0,Real Estate Investment Trusts,operating,,REAL ESTATE INVESTMENT TRUSTS,173
+HASI,1561894,6799.0,"Investors, NEC",operating,DE,"INVESTORS, NEC",99
+HGV,1674168,7000.0,"Hotels, Rooming Houses, Camps & Other Lodging Places",operating,DE,"HOTELS, ROOMING HOUSES, CAMPS & OTHER LODGING PLACES",87
+BYD,906553,7011.0,Hotels & Motels,operating,NV,HOTELS & MOTELS,86
+CHH,1046311,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+H,1468174,7011.0,Hotels & Motels,operating,IL,HOTELS & MOTELS,86
+HLT,1585689,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+LVS,1300514,7011.0,Hotels & Motels,operating,NV,HOTELS & MOTELS,86
+MGM,789570,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+PK,1617406,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+SHO,1295810,7011.0,Hotels & Motels,operating,MD,HOTELS & MOTELS,86
+TNL,1361658,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+WH,1722684,7011.0,Hotels & Motels,operating,DE,HOTELS & MOTELS,86
+XHR,1616000,7011.0,Hotels & Motels,operating,FL,HOTELS & MOTELS,86
+HRB,12659,7200.0,Services-Personal Services,operating,MO,SERVICES-PERSONAL SERVICES,237
+SCI,89089,7200.0,Services-Personal Services,operating,TX,SERVICES-PERSONAL SERVICES,237
+UNF,717954,7200.0,Services-Personal Services,operating,MA,SERVICES-PERSONAL SERVICES,237
+YELP,1345016,7200.0,Services-Personal Services,operating,DE,SERVICES-PERSONAL SERVICES,237
+CCO,1334978,7310.0,Services-Advertising,operating,,SERVICES-ADVERTISING,206
+IPG,51644,7311.0,Services-Advertising Agencies,operating,DE,SERVICES-ADVERTISING AGENCIES,207
+OMC,29989,7311.0,Services-Advertising Agencies,operating,NY,SERVICES-ADVERTISING AGENCIES,207
+EFX,33185,7320.0,"Services-Consumer Credit Reporting, Collection Agencies",operating,GA,"SERVICES-CONSUMER CREDIT REPORTING, COLLECTION AGENCIES",217
+MCO,1059556,7320.0,"Services-Consumer Credit Reporting, Collection Agencies",operating,DE,"SERVICES-CONSUMER CREDIT REPORTING, COLLECTION AGENCIES",217
+SPGI,64040,7320.0,"Services-Consumer Credit Reporting, Collection Agencies",operating,NY,"SERVICES-CONSUMER CREDIT REPORTING, COLLECTION AGENCIES",217
+TRU,1552033,7320.0,"Services-Consumer Credit Reporting, Collection Agencies",operating,DE,"SERVICES-CONSUMER CREDIT REPORTING, COLLECTION AGENCIES",217
+ABM,771497,7340.0,Services-To Dwellings & Other Buildings,operating,DE,SERVICES-TO DWELLINGS & OTHER BUILDINGS,240
+ROL,84839,7340.0,Services-To Dwellings & Other Buildings,operating,DE,SERVICES-TO DWELLINGS & OTHER BUILDINGS,240
+HRI,1364479,7350.0,Services-Miscellaneous Equipment Rental & Leasing,operating,DE,SERVICES-MISCELLANEOUS EQUIPMENT RENTAL & LEASING,233
+NPKI,71829,7350.0,Services-Miscellaneous Equipment Rental & Leasing,operating,DE,SERVICES-MISCELLANEOUS EQUIPMENT RENTAL & LEASING,233
+AER,1378789,7359.0,"Services-Equipment Rental & Leasing, NEC",other,P7,"SERVICES-EQUIPMENT RENTAL & LEASING, NEC",222
+AL,1487712,7359.0,"Services-Equipment Rental & Leasing, NEC",operating,DE,"SERVICES-EQUIPMENT RENTAL & LEASING, NEC",222
+PRG,1808834,7359.0,"Services-Equipment Rental & Leasing, NEC",operating,GA,"SERVICES-EQUIPMENT RENTAL & LEASING, NEC",222
+URI,1067701,7359.0,"Services-Equipment Rental & Leasing, NEC",operating,DE,"SERVICES-EQUIPMENT RENTAL & LEASING, NEC",222
+KFY,56679,7361.0,Services-Employment Agencies,operating,DE,SERVICES-EMPLOYMENT AGENCIES,220
+AMN,1142750,7363.0,Services-Help Supply Services,operating,DE,SERVICES-HELP SUPPLY SERVICES,225
+ASGN,890564,7363.0,Services-Help Supply Services,operating,DE,SERVICES-HELP SUPPLY SERVICES,225
+KFRC,930420,7363.0,Services-Help Supply Services,operating,FL,SERVICES-HELP SUPPLY SERVICES,225
+MAN,871763,7363.0,Services-Help Supply Services,operating,WI,SERVICES-HELP SUPPLY SERVICES,225
+NSP,1000753,7363.0,Services-Help Supply Services,operating,DE,SERVICES-HELP SUPPLY SERVICES,225
+RHI,315213,7363.0,Services-Help Supply Services,operating,DE,SERVICES-HELP SUPPLY SERVICES,225
+TBI,768899,7363.0,Services-Help Supply Services,operating,WA,SERVICES-HELP SUPPLY SERVICES,225
+FDS,1013237,7370.0,"Services-Computer Programming, Data Processing, Etc.",operating,DE,"SERVICES-COMPUTER PROGRAMMING, DATA PROCESSING, ETC.",216
+FLUT,1635327,7370.0,"Services-Computer Programming, Data Processing, Etc.",operating,L2,"SERVICES-COMPUTER PROGRAMMING, DATA PROCESSING, ETC.",216
+EPAM,1352010,7371.0,Services-Computer Programming Services,operating,DE,SERVICES-COMPUTER PROGRAMMING SERVICES,215
+BOX,1372612,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+CRM,1108524,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+DAY,1725057,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+DDD,910638,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+GWRE,1528396,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+HUBS,1404655,7372.0,Services-Prepackaged Software,operating,NY,SERVICES-PREPACKAGED SOFTWARE,238
+NOW,1373715,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+ORCL,1341439,7372.0,Services-Prepackaged Software,operating,,SERVICES-PREPACKAGED SOFTWARE,238
+TDC,816761,7372.0,Services-Prepackaged Software,operating,,SERVICES-PREPACKAGED SOFTWARE,238
+TWLO,1447669,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+TYL,860731,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+VEEV,1393052,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+WK,1445305,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+XYZ,1512673,7372.0,Services-Prepackaged Software,operating,DE,SERVICES-PREPACKAGED SOFTWARE,238
+CACI,16058,7373.0,Services-Computer Integrated Systems Design,operating,DE,SERVICES-COMPUTER INTEGRATED SYSTEMS DESIGN,213
+GDDY,1609711,7373.0,Services-Computer Integrated Systems Design,operating,DE,SERVICES-COMPUTER INTEGRATED SYSTEMS DESIGN,213
+LDOS,1336920,7373.0,Services-Computer Integrated Systems Design,operating,,SERVICES-COMPUTER INTEGRATED SYSTEMS DESIGN,213
+UIS,746838,7373.0,Services-Computer Integrated Systems Design,operating,DE,SERVICES-COMPUTER INTEGRATED SYSTEMS DESIGN,213
+CARS,1683606,7374.0,Services-Computer Processing & Data Preparation,operating,DE,SERVICES-COMPUTER PROCESSING & DATA PREPARATION,214
+DXC,1688568,7374.0,Services-Computer Processing & Data Preparation,operating,NV,SERVICES-COMPUTER PROCESSING & DATA PREPARATION,214
+EVTC,1559865,7374.0,Services-Computer Processing & Data Preparation,operating,PR,SERVICES-COMPUTER PROCESSING & DATA PREPARATION,214
+GLOB,1557860,7374.0,Services-Computer Processing & Data Preparation,other,U3,SERVICES-COMPUTER PROCESSING & DATA PREPARATION,214
+YEXT,1614178,7374.0,Services-Computer Processing & Data Preparation,operating,DE,SERVICES-COMPUTER PROCESSING & DATA PREPARATION,214
+DFIN,1669811,7380.0,Services-Miscellaneous Business Services,operating,DE,SERVICES-MISCELLANEOUS BUSINESS SERVICES,232
+ALLE,1579241,7381.0,"Services-Detective, Guard & Armored Car Services",operating,L2,"SERVICES-DETECTIVE, GUARD & ARMORED CAR SERVICES",218
+ACN,1467373,7389.0,"Services-Business Services, NEC",operating,L2,"SERVICES-BUSINESS SERVICES, NEC",210
+BABA,1577552,7389.0,"Services-Business Services, NEC",other,K3,"SERVICES-BUSINESS SERVICES, NEC",210
+BR,1383312,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+CBZ,944148,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+CPAY,1175454,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+FI,798354,7389.0,"Services-Business Services, NEC",operating,WI,"SERVICES-BUSINESS SERVICES, NEC",210
+FICO,814547,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+FIS,1136893,7389.0,"Services-Business Services, NEC",operating,,"SERVICES-BUSINESS SERVICES, NEC",210
+GPN,1123360,7389.0,"Services-Business Services, NEC",operating,GA,"SERVICES-BUSINESS SERVICES, NEC",210
+MA,1141391,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+MMS,1032220,7389.0,"Services-Business Services, NEC",operating,VA,"SERVICES-BUSINESS SERVICES, NEC",210
+MSCI,1408198,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+V,1403161,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+WEX,1309108,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+WU,1365135,7389.0,"Services-Business Services, NEC",operating,DE,"SERVICES-BUSINESS SERVICES, NEC",210
+R,85961,7510.0,Services-Auto Rental & Leasing (No Drivers),operating,FL,SERVICES-AUTO RENTAL & LEASING (NO DRIVERS),209
+TISI,318833,7600.0,Services-Miscellaneous Repair Services,operating,DE,SERVICES-MISCELLANEOUS REPAIR SERVICES,234
+CNK,1385280,7830.0,Services-Motion Picture Theaters,operating,DE,SERVICES-MOTION PICTURE THEATERS,235
+LYV,1335258,7900.0,Services-Amusement & Recreation Services,operating,DE,SERVICES-AMUSEMENT & RECREATION SERVICES,208
+DIS,1744489,7990.0,Services-Miscellaneous Amusement & Recreation,operating,DE,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+MTN,812011,7990.0,Services-Miscellaneous Amusement & Recreation,operating,DE,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+PRKS,1564902,7990.0,Services-Miscellaneous Amusement & Recreation,operating,DE,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+PRSU,884219,7990.0,Services-Miscellaneous Amusement & Recreation,operating,DE,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+EVRI,1318568,7990.0,Services-Miscellaneous Amusement & Recreation,operating,DE,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+IGT,1619762,7990.0,Services-Miscellaneous Amusement & Recreation,other,X0,SERVICES-MISCELLANEOUS AMUSEMENT & RECREATION,231
+PLNT,1637207,7997.0,Services-Membership Sports & Recreation Clubs,operating,DE,SERVICES-MEMBERSHIP SPORTS & RECREATION CLUBS,229
+BKD,1332349,8050.0,Services-Nursing & Personal Care Facilities,operating,DE,SERVICES-NURSING & PERSONAL CARE FACILITIES,236
+CYH,1108109,8062.0,"Services-General Medical & Surgical Hospitals, NEC",operating,DE,"SERVICES-GENERAL MEDICAL & SURGICAL HOSPITALS, NEC",224
+HCA,860730,8062.0,"Services-General Medical & Surgical Hospitals, NEC",operating,,"SERVICES-GENERAL MEDICAL & SURGICAL HOSPITALS, NEC",224
+THC,70318,8062.0,"Services-General Medical & Surgical Hospitals, NEC",operating,NV,"SERVICES-GENERAL MEDICAL & SURGICAL HOSPITALS, NEC",224
+UHS,352915,8062.0,"Services-General Medical & Surgical Hospitals, NEC",operating,DE,"SERVICES-GENERAL MEDICAL & SURGICAL HOSPITALS, NEC",224
+DGX,1022079,8071.0,Services-Medical Laboratories,operating,DE,SERVICES-MEDICAL LABORATORIES,228
+LH,920148,8071.0,Services-Medical Laboratories,operating,,SERVICES-MEDICAL LABORATORIES,228
+DVA,927066,8090.0,"Services-Misc Health & Allied Services, NEC",operating,DE,"SERVICES-MISC HEALTH & ALLIED SERVICES, NEC",230
+ATGE,730464,8200.0,Services-Educational Services,operating,DE,SERVICES-EDUCATIONAL SERVICES,219
+CHGG,1364954,8200.0,Services-Educational Services,operating,DE,SERVICES-EDUCATIONAL SERVICES,219
+GHC,104889,8200.0,Services-Educational Services,operating,DE,SERVICES-EDUCATIONAL SERVICES,219
+BFAM,1437578,8351.0,Services-Child Day Care Services,operating,,SERVICES-CHILD DAY CARE SERVICES,211
+ACM,868857,8711.0,Services-Engineering Services,operating,DE,SERVICES-ENGINEERING SERVICES,221
+CRL,1100682,8731.0,Services-Commercial Physical & Biological Research,operating,,SERVICES-COMMERCIAL PHYSICAL & BIOLOGICAL RESEARCH,212
+IQV,1478242,8731.0,Services-Commercial Physical & Biological Research,operating,DE,SERVICES-COMMERCIAL PHYSICAL & BIOLOGICAL RESEARCH,212
+EVH,1628908,8741.0,Services-Management Services,operating,DE,SERVICES-MANAGEMENT SERVICES,227
+IT,749251,8741.0,Services-Management Services,operating,DE,SERVICES-MANAGEMENT SERVICES,227
+BAH,1443646,8742.0,Services-Management Consulting Services,operating,DE,SERVICES-MANAGEMENT CONSULTING SERVICES,226
+FCN,887936,8742.0,Services-Management Consulting Services,operating,MD,SERVICES-MANAGEMENT CONSULTING SERVICES,226
+G,1398659,8742.0,Services-Management Consulting Services,operating,D0,SERVICES-MANAGEMENT CONSULTING SERVICES,226
+VVX,1601548,8744.0,Services-Facilities Support Management Services,operating,IN,SERVICES-FACILITIES SUPPORT MANAGEMENT SERVICES,223
+NVRI,45876,8900.0,"Services-Services, NEC",operating,DE,"SERVICES-SERVICES, NEC",239
+CADE,1299939,,,other,MS,UNKNOWN,264
+TRTN,1053256,,,other,,UNKNOWN,264
