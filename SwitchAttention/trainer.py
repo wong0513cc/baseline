@@ -212,6 +212,7 @@ def evaluate(model: nn.Module,
 
     all_preds_company, all_labels_company = [], []
     all_alphas = {"price": [], "fin": [], "news": [], "event": []}
+    mha_alphas = {"price": [], "fin": [], "news": [], "event": []}
     has_alphas = True
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
@@ -233,16 +234,14 @@ def evaluate(model: nn.Module,
             labels_y_list.append(lc.reshape(-1))
 
             if plot_attn:
-                try:
                     all_alphas["price"].append(out["alpha_time_price"].cpu().numpy())
                     all_alphas["fin"].append(out["alpha_time_fin"].cpu().numpy())
                     all_alphas["news"].append(out["alpha_time_news"].cpu().numpy())
                     all_alphas["event"].append(out["alpha_time_event"].cpu().numpy())
-                except KeyError as e:
-                    if has_alphas: 
-                        print(f"Warning: Model output missing key ({e}). No attention plot.")
-                    has_alphas = False
-                    plot_attn = False
+                    mha_alphas["price"].append(out["alpha_mha_price"].cpu().numpy())
+                    mha_alphas["fin"].append(out["alpha_mha_fin"].cpu().numpy())
+                    mha_alphas["news"].append(out["alpha_mha_news"].cpu().numpy())
+                    mha_alphas["event"].append(out["alpha_mha_event"].cpu().numpy())
 
             # raw取symbols
             syms = raw.get("symbols", None)
@@ -307,6 +306,21 @@ def evaluate(model: nn.Module,
         # print(f"[DBG2][{desc}] RMSE(model)={rmse_model:.4f} vs RMSE(mean)={rmse_mean:.4f}")
         # print(f"[DBG3][{desc}] pred std={float(Yh.std()):.4f}  true std={float(Y.std()):.4f}")
 
+    if plot_attn and has_alphas and len(mha_alphas["price"]) > 0:
+        plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap_mha", f"{desc}_temporal_attention_{args.target}.png")
+        try:
+
+            plot_temporal_attention_heatmap(
+                mha_alphas, 
+                plot_path, 
+                title=f"Average Temporal Attention_MHA({desc})"
+            )
+            print(f"Saved attention heatmap to {plot_path}")
+        except Exception as e:
+            print(f"Failed to plot attention heatmap. Error: {e}")
+            import traceback
+            traceback.print_exc()
+
     if plot_attn and has_alphas and len(all_alphas["price"]) > 0:
         plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap", f"{desc}_temporal_attention_{args.target}.png")
         try:
@@ -314,7 +328,7 @@ def evaluate(model: nn.Module,
             plot_temporal_attention_heatmap(
                 all_alphas, 
                 plot_path, 
-                title=f"Average Temporal Attention ({desc})"
+                title=f"Average Temporal Attention_MLP({desc})"
             )
             print(f"Saved attention heatmap to {plot_path}")
         except Exception as e:
