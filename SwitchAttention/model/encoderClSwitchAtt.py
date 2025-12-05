@@ -99,7 +99,7 @@ class TemporalAttentionAggregator(nn.Module): # performance更好
     
 # MHA    
 class MHA(nn.Module):
-    def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = True):
+    def __init__(self, hidden: int, num_heads: int = 1, dropout: float = 0.1, causal: bool = False):
         super().__init__()
         self.attn = nn.MultiheadAttention(
             embed_dim=hidden,
@@ -129,10 +129,76 @@ class MHA(nn.Module):
         out, attn_viz = self.attn(x, x, x, attn_mask=attn_mask, need_weights=True) #[B*N, K, H]
         out = out.reshape(B, N, K, H).permute(0, 2, 1, 3) #[b,k,n,h]
         return out, attn_viz
+    
+# # Switch Attention
+# """
+# 痾 簡而言之 這裡就是四個模態各自更新自己的Q 但每個模態的六個組合會一層一層更新下去 每層的Q都是更新過後的Q
+# """
+# class SwitchLayer(nn.Module):
+#     def __init__(self, hidden: int, ca: CrossAttention,
+#                  dropout: float = 0.1, residual_scale: float = 0.2):
+#         super().__init__()
+#         self.ca = ca
+#         self.s = residual_scale
 
+#         self.ln1 = nn.LayerNorm(hidden)
+#         self.ff  = nn.Sequential(
+#             nn.Linear(hidden, hidden),
+#             nn.ReLU(),
+#             nn.Dropout(dropout),
+#             nn.Linear(hidden, hidden),
+#         )
+#         self.ln2 = nn.LayerNorm(hidden)
+
+#     def forward(self, q, k, v):
+#         # q, k, v: [B, N, H]
+#         delta = self.ca(q, k, v)              # [B, N, H]
+#         q_new = self.ln1(q + self.s * delta) 
+
+#         ff_out = self.ff(q_new)           
+#         q_new = self.ln2(q_new + ff_out)
+#         return q_new
+
+# class SwitchAttention(nn.Module):
+#     def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.2):
+#         super().__init__()
+#         self.ca = CrossAttention(hidden)
+#         self.layer = SwitchLayer(hidden, self.ca, dropout, residual_scale)
+
+#         self.mods = ['p', 'f', 'n', 'e']
+
+#     def forward(self, Zp, Zf, Zn, Ze):
+#         orig = {'p': Zp, 'f': Zf, 'n': Zn, 'e': Ze}
+#         out  = {'p': Zp, 'f': Zf, 'n': Zn, 'e': Ze}
+
+#         for q_mod in self.mods:
+#             others = [m for m in self.mods if m != q_mod]
+
+#             pairs = []
+#             for k_mod in others:
+#                 for v_mod in others:
+#                     if k_mod == v_mod:
+#                         continue
+#                     pairs.append((k_mod, v_mod))  
+
+#             q = out[q_mod]
+
+#             for k_mod, v_mod in pairs:
+#                 k = orig[k_mod]  
+#                 v = orig[v_mod]
+#                 q = self.layer(q, k, v)
+
+#             out[q_mod] = q 
+
+#         return out['p'], out['f'], out['n'], out['e']
+
+# Switch Attention
+"""
+這邊的switch attention 是先從Q開始更新 在六個組合裡也都是用更新過後的QKV去做計算 且效果是最頂的
+"""
 class SwitchLayer(nn.Module):
     def __init__(self, hidden: int, q_mod: str, k_mod: str, v_mod: str,
-                 ca: CrossAttention, dropout: float = 0.1, residual_scale: float = 0.5):
+                 ca: CrossAttention, dropout: float = 0.1, residual_scale: float = 0.2):
         super().__init__()
         self.ca = ca            
         self.q_mod = q_mod      
@@ -175,22 +241,32 @@ class SwitchLayer(nn.Module):
         return Zp, Zf, Zn, Ze
 
 class SwitchAttention(nn.Module):
-    def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.5):
+    def __init__(self, hidden: int, dropout: float = 0.1, residual_scale: float = 0.2):
         super().__init__()
         ca = CrossAttention(hidden)   # 共享的 QKV
 
-        self.layers = nn.ModuleList([
-            SwitchLayer(hidden, 'p', 'f', 'n', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'f', 'n', 'e', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'n', 'e', 'p', ca, dropout, residual_scale),
-            SwitchLayer(hidden, 'e', 'p', 'f', ca, dropout, residual_scale),
-        ])
+        mods = ['p', 'f', 'n', 'e']
+        layers = []
+
+        for q in mods:
+            others = [m for m in mods if m != q]   # 剩下三個當 K/V 候選
+            for k in others:
+                for v in others:
+                    if v == k:
+                        continue                   
+
+                    layers.append(
+                        SwitchLayer(hidden, q, k, v, ca, dropout, residual_scale)
+                    )
+
+        # 共 4(mods) * 3 * 2 = 24 個 layer
+        self.layers = nn.ModuleList(layers)
 
     def forward(self, Zp, Zf, Zn, Ze):
         for layer in self.layers:
             Zp, Zf, Zn, Ze = layer(Zp, Zf, Zn, Ze)
         return Zp, Zf, Zn, Ze
-
+    
 # Main model
 class ESGMultiModalModel(nn.Module):
     def __init__(self,
@@ -221,10 +297,10 @@ class ESGMultiModalModel(nn.Module):
 
     # Attention
         # multihead attention
-        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
-        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=True)
+        self.self_attn_price = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_fin = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_news = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
+        self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
 
     
         # mlp aggregator
@@ -234,7 +310,7 @@ class ESGMultiModalModel(nn.Module):
         self.event_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
 
     # fusion
-        self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.5)
+        self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.2)
         d_fused = hidden * 4
         self.predictor = nn.Linear(d_fused, 1)
         self.ln = nn.LayerNorm(hidden)

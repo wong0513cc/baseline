@@ -540,7 +540,8 @@ def main():
     # print(f"Saved test CSV to {csv_path}")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    year_csv_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/result/final", f"{args.target}_{timestamp}.csv")
+    os.makedirs("/home/sally/myWork/SwitchAttention/outputs/result/final_switchattn", exist_ok=True)
+    year_csv_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/result/final_switchattn", f"{args.target}_{timestamp}.csv")
     _ = save_test_year_metrics(test_detail, years=[2023, 2024], out_path=year_csv_path)
     print(f"Saved per-year test metrics CSV to {year_csv_path}")
 

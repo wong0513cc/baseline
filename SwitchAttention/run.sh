@@ -6,7 +6,7 @@ ROOT_FIN=/home/sally/dataset/data_preprocessing/financial_new
 ROOT_NEWS=/home/sally/dataset/data_preprocessing/news/bert/bert_monthly_embeddings
 ROOT_EVENT=/home/sally/dataset/data_preprocessing/event_type_PCA
 ROOT_GRAPH=/home/sally/dataset/gkg_data/monthly_graph_new
-ROOT_LABEL=/home/sally/dataset/data_preprocessing/esg_label/esg_npy
+ROOT_LABEL=/home/sally/myWork/TotalScore/esgScore
 ROOT_SYMS=/home/sally/dataset/ticker/nyse/yearly_symbol_id
 
 for target in env soc gov
