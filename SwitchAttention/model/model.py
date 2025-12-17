@@ -302,13 +302,13 @@ class ESGMultiModalModel(nn.Module):
         self.self_attn_event = MHA(hidden=hidden, num_heads=1, dropout=dropout, causal=False)
 
         # mlp aggregator
-        # self.price_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
-        # self.fin_additive_attn= TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
-        # self.news_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
-        # self.event_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.price_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.fin_additive_attn= TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.news_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
+        self.event_additive_attn = TemporalAttentionAggregator(hidden, attn_hidden=128, dropout=dropout)
 
     # # fusion
-        self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.2)
+    #     self.switch_attn = SwitchAttention(hidden=hidden, dropout=dropout, residual_scale=0.2)
     
     #prediction    
         d_fused = hidden * 4
@@ -336,34 +336,30 @@ class ESGMultiModalModel(nn.Module):
         He_sa, mha_event = self.self_attn_event(He)
 
         # additive attn
-        # Zp, alpha_p = self.price_additive_attn(Hp_sa)
-        # Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask=fm)
-        # Zn, alpha_n = self.news_additive_attn(Hn_sa)
-        # Ze, alpha_e = self.event_additive_attn(He_sa)
+        Zp, alpha_p = self.price_additive_attn(Hp_sa)
+        Zf, alpha_f = self.fin_additive_attn(Hf_sa, mask=fm)
+        Zn, alpha_n = self.news_additive_attn(Hn_sa)
+        Ze, alpha_e = self.event_additive_attn(He_sa)
 
-        Hp_sa = Hp_sa.mean(dim=1)
-        Hf_sa = Hf_sa.mean(dim=1)   
-        Hn_sa = Hn_sa.mean(dim=1)
-        He_sa = He_sa.mean(dim=1)
 
         # cross modal fusion
-        Zp, Zf, Zn, Ze = self.switch_attn(Hp_sa, Hf_sa, Hn_sa, He_sa)
+        # Zp, Zf, Zn, Ze = self.switch_attn(Zp, Zf, Zn, Ze)
 
         # prediction layer
         # [B,N,H] * 4 -> [B,N, 4*H]
 
         Z = torch.cat([Zp, Zf, Zn, Ze], dim=-1)
         # Z = torch.cat([Hp_aligned[:, -1],Hf_aligned[:, -1], Hn_aligned[:, -1], He_aligned[:, -1]], dim=-1)
-        # Z = torch.cat([Hp_sa.mean(dim=1), Hf_sa.mean(dim=1), Hn_sa.mean(dim=1), He_sa.mean(dim=1)],dim=-1)
+        # Z = torch.cat([Hp_aligned.mean(dim=1), Hf_aligned.mean(dim=1), Hn_aligned.mean(dim=1), He_aligned.mean(dim=1)],dim=-1)
 
         pred_company = self.predictor(Z).unsqueeze(1)  # [B,1,N,1]
 
         out = {
             "pred_company": pred_company,
-            # "alpha_time_price": alpha_p,
-            # "alpha_time_fin": alpha_f,
-            # "alpha_time_news": alpha_n,
-            # "alpha_time_event": alpha_e,
+            "alpha_time_price": alpha_p,
+            "alpha_time_fin": alpha_f,
+            "alpha_time_news": alpha_n,
+            "alpha_time_event": alpha_e,
             "alpha_mha_price": mha_price,
             "alpha_mha_fin": mha_fin,
             "alpha_mha_news": mha_news,

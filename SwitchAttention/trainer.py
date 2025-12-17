@@ -5,7 +5,6 @@ import argparse
 import random
 from typing import Dict, Tuple, List
 import numpy as np
-from datetime import datetime
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -22,7 +21,7 @@ from model.encoderClSwitchAtt import ESGMultiModalModel
 from dataset import GraphESGDataset
 from dataloader import build_loaders
 from baseline import _gather_split_labels, compute_and_save_baselines, _to_numpy_label_company, _rmse, _mse, _mae, _write_csv, _extract_label_company_from_label
-
+from datetime import datetime
 TARGET2IDX = {"env": 0, "soc": 1, "gov": 2}
 
 def plot_temporal_attention_heatmap(alphas_dict: Dict[str, List[np.ndarray]], out_path: str, title: str):
@@ -105,22 +104,59 @@ def plot_temporal_attention_heatmap(alphas_dict: Dict[str, List[np.ndarray]], ou
 # Train/Eval
 
 def move_inputs(batch: dict, device: torch.device, target: str):
-    to = lambda t: (t.float().to(device) if isinstance(t, torch.Tensor) else t)
-    price   = to(batch["price"]);   finance = to(batch["finance"])
-    event   = to(batch["event"]);   news    = to(batch["news"])
-    adj = to (batch["network"]); company_id = to(batch["company_id"])
+    def to_tensor(x):
+        if isinstance(x, torch.Tensor):
+            return x
+        if isinstance(x, np.ndarray):
+            return torch.from_numpy(x)
+        return x
+    
+    def to_dev(x):
+        x = to_tensor(x)
+        return x.float().to(device) if isinstance(x, torch.Tensor) else x
+    
+    # -------- features --------
+    price      = to_dev(batch["price"])
+    finance    = to_dev(batch["finance"])
+    event      = to_dev(batch["event"])
+    news       = to_dev(batch["news"])
+    adj        = to_dev(batch["network"])
+    company_id = to_dev(batch["company_id"])
 
-    if price.ndim == 3: price = price.unsqueeze(0)
+    if price.ndim   == 3: price   = price.unsqueeze(0)
     if finance.ndim == 3: finance = finance.unsqueeze(0)
-    if event.ndim == 3: event = event.unsqueeze(0)
-    if news.ndim == 3: news = news.unsqueeze(0)
-    if adj.ndim ==3: adj = adj.unsqueeze(0)
+    if event.ndim   == 3: event   = event.unsqueeze(0)
+    if news.ndim    == 3: news    = news.unsqueeze(0)
+    if adj.ndim     == 3: adj     = adj.unsqueeze(0)
 
-    bd = {"price":price, "finance":finance, "news":news, "event":event, "network": adj, "company_id": company_id}
-    if "label" in batch and batch["label"] is not None:
-        lab = to(batch["label"])
-        lab_company= select_labels_company_and_overall(lab, target)
-        bd["label_company"] = lab_company.to(device)  # [B,1,N,1]
+    bd = {
+        "price": price,
+        "finance": finance,
+        "news": news,
+        "event": event,
+        "network": adj,
+        "company_id": company_id,
+    }
+
+    lab_company = batch.get("label_company", None)
+    if lab_company is not None:
+        lab_company = to_dev(lab_company)
+        # 如果是 [B,N,1] 或 [B,N] 這種，你可以視情況補一個維度：
+        if lab_company.ndim == 3:       # [B,N,1] -> [B,1,N,1]
+            lab_company = lab_company.unsqueeze(1)
+        bd["label_company"] = lab_company
+        return bd
+
+    # 否則就從 label / labels 算
+    raw_label = batch.get("label", None)
+    if raw_label is None:
+        raw_label = batch.get("labels", None)
+
+    if raw_label is not None:
+        lab = to_dev(raw_label)
+        lab_company = select_labels_company_and_overall(lab, target)
+        bd["label_company"] = lab_company.to(device)
+
     return bd
 
 
@@ -142,6 +178,10 @@ def train_one_epoch(model: nn.Module,
         step = 0
         for raw in loaders_by_year[y]:
             batch = move_inputs(raw, device, args.target)
+            if "label_company" not in batch or batch["label_company"] is None:
+                raise RuntimeError(
+                    f"[TRAIN] missing label_company. raw keys={list(raw.keys())}"
+    )
             optimizer.zero_grad(set_to_none=True)
 
             with torch.cuda.amp.autocast(enabled=args.amp):
@@ -168,15 +208,6 @@ def train_one_epoch(model: nn.Module,
             if scale_after < scale_before:
                 print(f"[AMP] scale decreased {scale_before} -> {scale_after} (possible inf/NaN grads)")
 
-            #  # ===== DBG 3：這個 batch 更新後，head 權重是否有改變 =====
-            # with torch.no_grad():
-            #     head_w_after_batch = 0.0
-            #     for n,p in model.named_parameters():
-            #         if p.requires_grad and "company_head" in n:
-            #             head_w_after_batch += p.norm().item()
-            # print(f"[DBG#3][epoch {epoch} y{y} step{step}] head ||w|| batch-UPDATED =", head_w_after_batch,
-            #       f"(amp scale {scale_before:.1e}->{scale_after:.1e})")
-            # step += 1
 
             # logging
             log["loss_total"] += float(loss.detach().item())
@@ -189,7 +220,6 @@ def train_one_epoch(model: nn.Module,
         if k != "steps":
             log[k] = log[k] / max(1, log["steps"])
     return log
-
 
         
 @torch.no_grad()
@@ -212,7 +242,6 @@ def evaluate(model: nn.Module,
 
     all_preds_company, all_labels_company = [], []
     all_alphas = {"price": [], "fin": [], "news": [], "event": []}
-    mha_alphas = {"price": [], "fin": [], "news": [], "event": []}
     has_alphas = True
     years = sorted(list(loaders_by_year.keys()))
     for y in years:
@@ -234,14 +263,16 @@ def evaluate(model: nn.Module,
             labels_y_list.append(lc.reshape(-1))
 
             if plot_attn:
+                try:
                     all_alphas["price"].append(out["alpha_time_price"].cpu().numpy())
                     all_alphas["fin"].append(out["alpha_time_fin"].cpu().numpy())
                     all_alphas["news"].append(out["alpha_time_news"].cpu().numpy())
                     all_alphas["event"].append(out["alpha_time_event"].cpu().numpy())
-                    mha_alphas["price"].append(out["alpha_mha_price"].cpu().numpy())
-                    mha_alphas["fin"].append(out["alpha_mha_fin"].cpu().numpy())
-                    mha_alphas["news"].append(out["alpha_mha_news"].cpu().numpy())
-                    mha_alphas["event"].append(out["alpha_mha_event"].cpu().numpy())
+                except KeyError as e:
+                    if has_alphas: 
+                        print(f"Warning: Model output missing key ({e}). No attention plot.")
+                    has_alphas = False
+                    plot_attn = False
 
             # raw取symbols
             syms = raw.get("symbols", None)
@@ -306,21 +337,6 @@ def evaluate(model: nn.Module,
         # print(f"[DBG2][{desc}] RMSE(model)={rmse_model:.4f} vs RMSE(mean)={rmse_mean:.4f}")
         # print(f"[DBG3][{desc}] pred std={float(Yh.std()):.4f}  true std={float(Y.std()):.4f}")
 
-    if plot_attn and has_alphas and len(mha_alphas["price"]) > 0:
-        plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap_mha", f"{desc}_temporal_attention_{args.target}.png")
-        try:
-
-            plot_temporal_attention_heatmap(
-                mha_alphas, 
-                plot_path, 
-                title=f"Average Temporal Attention_MHA({desc})"
-            )
-            print(f"Saved attention heatmap to {plot_path}")
-        except Exception as e:
-            print(f"Failed to plot attention heatmap. Error: {e}")
-            import traceback
-            traceback.print_exc()
-
     if plot_attn and has_alphas and len(all_alphas["price"]) > 0:
         plot_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/heatmap", f"{desc}_temporal_attention_{args.target}.png")
         try:
@@ -328,7 +344,7 @@ def evaluate(model: nn.Module,
             plot_temporal_attention_heatmap(
                 all_alphas, 
                 plot_path, 
-                title=f"Average Temporal Attention_MLP({desc})"
+                title=f"Average Temporal Attention ({desc})"
             )
             print(f"Saved attention heatmap to {plot_path}")
         except Exception as e:
@@ -458,7 +474,6 @@ def main():
         history["train"]["loss_total"].append(tr_log["loss_total"])
         history["train"]["mse"].append(tr_log["mse"])
         history["train"]["ic_company"].append(tr_log["ic_company"])
-        history["train"]["cl"].append(tr_log["cl"])
 
         # validation
         val_metrics, val_detail = evaluate(model, val_loaders, device, args, desc="val")
@@ -523,7 +538,7 @@ def main():
 
     val_csv_path = os.path.join(args.out_dir, f"val_results_{args.target}.csv")
     _ = save_test_csv(val_detail, val_csv_path)
-    # print(f"Saved test CSV to {val_csv_path}")
+    print(f"Saved test CSV to {val_csv_path}")
 
     # TEST once
     test_metrics, test_detail = evaluate(model, test_loaders, device, args, desc="test", plot_attn=True)   
@@ -537,11 +552,10 @@ def main():
 
     csv_path = os.path.join(args.out_dir, f"test_results_{args.target}.csv")
     _ = save_test_csv(test_detail, csv_path)
-    # print(f"Saved test CSV to {csv_path}")
+    print(f"Saved test CSV to {csv_path}")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    os.makedirs("/home/sally/myWork/SwitchAttention/outputs/result/final_switchattn", exist_ok=True)
-    year_csv_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/result/final_switchattn", f"{args.target}_{timestamp}.csv")
+    year_csv_path = os.path.join("/home/sally/myWork/SwitchAttention/outputs/ablation/crossattn", f"test_year_metrics_{args.target}_{timestamp}.csv")
     _ = save_test_year_metrics(test_detail, years=[2023, 2024], out_path=year_csv_path)
     print(f"Saved per-year test metrics CSV to {year_csv_path}")
 
